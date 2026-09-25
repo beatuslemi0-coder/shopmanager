@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="sw">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Reports</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main class="container">
+      <h1>Profit & Loss</h1>
+      <select id="period">
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="week">This week</option>
+        <option value="month">This month</option>
+        <option value="year">This year</option></select
+      ><button onclick="load()">Generate</button>
+      <div id="r" class="grid"></div>
+    </main>
+    <script src="js/api.js"></script>
+    <script>
+      async function load() {
+        let x = await api("/reports/summary?period=" + period.value);
+        r.innerHTML = [
+          ["Revenue", x.revenue],
+          ["COGS", x.cost_of_goods],
+          ["Gross Profit", x.gross_profit],
+          ["Expenses", x.expenses],
+          ["Net Profit", x.net_profit],
+          ["Margin", Number(x.profit_margin).toFixed(2) + "%"],
+          ["Transactions", x.sales_count],
+          ["Products Sold", x.products_sold],
+        ]
+          .map(
+            (z) => `<div class="stat"><span>${z[0]}</span><b>${z[1]}</b></div>`,
+          )
+          .join("");
+      }
+      load();
+    </script>
+  </body>
+</html>

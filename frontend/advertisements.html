@@ -1,0 +1,325 @@
+<!doctype html>
+
+<html lang="sw">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Advertisements</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+
+<body>
+
+<div id="nav"></div>
+
+
+<main class="container">
+
+    <h1>Advertisements</h1>
+
+
+    <form
+        id="f"
+        class="card"
+    >
+
+        <!-- Jina la tangazo -->
+        <input
+            id="t"
+            placeholder="Post title"
+            required
+        >
+
+
+        <!-- Bei -->
+        <input
+            id="p"
+            type="number"
+            min="0"
+            placeholder="Price"
+        >
+
+
+        <!-- Kuchagua picha kutoka computer -->
+        <label>
+            Chagua picha ya bidhaa
+        </label>
+
+        <input
+            id="imageFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            required
+        >
+
+
+        <!-- Preview ya picha kabla ya kupost -->
+        <img
+            id="imagePreview"
+            class="image-preview"
+            alt="Image preview"
+        >
+
+
+        <!-- Maelezo -->
+        <textarea
+            id="d"
+            placeholder="Description"
+        ></textarea>
+
+
+        <button type="submit">
+            Upload & Publish
+        </button>
+
+    </form>
+
+
+    <h2>My Advertisements</h2>
+
+    <div
+        id="list"
+        class="cards"
+    ></div>
+
+</main>
+
+
+<script src="js/api.js"></script>
+
+
+<script>
+
+    // Tunapata elements kutoka HTML
+    const form = document.getElementById("f");
+
+    const titleInput = document.getElementById("t");
+
+    const priceInput = document.getElementById("p");
+
+    const descriptionInput = document.getElementById("d");
+
+    const imageFileInput = document.getElementById("imageFile");
+
+    const imagePreview = document.getElementById("imagePreview");
+
+    const list = document.getElementById("list");
+
+
+    // -----------------------------
+    // PREVIEW YA PICHA
+    // -----------------------------
+
+    imageFileInput.addEventListener(
+        "change",
+        function () {
+
+            const file = this.files[0];
+
+            // Kama seller hajachagua picha
+            if (!file) {
+
+                imagePreview.src = "";
+
+                imagePreview.style.display = "none";
+
+                return;
+            }
+
+
+            // Tunaonyesha picha kabla ya upload
+            imagePreview.src = URL.createObjectURL(file);
+
+            imagePreview.style.display = "block";
+        }
+    );
+
+
+    // -----------------------------
+    // KULOAD ADVERTISEMENTS
+    // -----------------------------
+
+    async function loadAdvertisements() {
+
+        try {
+
+            const advertisements =
+                await api("/advertisements");
+
+
+            list.innerHTML =
+                advertisements.map(ad => {
+
+                    // Kama image ipo tunaonyesha
+                    const image = ad.image_url
+                        ? `
+                            <img
+                                src="http://127.0.0.1:8000${ad.image_url}"
+                                class="product-image"
+                                alt="${ad.title}"
+                            >
+                        `
+                        : "";
+
+
+                    return `
+                        <div class="card">
+
+                            ${image}
+
+                            <h3>
+                                ${ad.title}
+                            </h3>
+
+                            <p>
+                                ${ad.description || ""}
+                            </p>
+
+                            <b>
+                                ${
+                                    ad.price
+                                        ? "TZS " +
+                                          Number(ad.price)
+                                          .toLocaleString()
+                                        : ""
+                                }
+                            </b>
+
+                        </div>
+                    `;
+
+                }).join("");
+
+        } catch (error) {
+
+            console.error(error);
+
+            list.innerHTML = `
+                <p>
+                    Imeshindikana kupata matangazo.
+                </p>
+            `;
+        }
+    }
+
+
+    // -----------------------------
+    // KUPOST ADVERTISEMENT
+    // -----------------------------
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            try {
+
+                const file =
+                    imageFileInput.files[0];
+
+
+                // Hakikisha picha imechaguliwa
+                if (!file) {
+
+                    alert(
+                        "Tafadhali chagua picha ya bidhaa."
+                    );
+
+                    return;
+                }
+
+
+                // Hatua ya kwanza:
+                // Upload picha kwenda FastAPI
+                const imageUrl =
+                    await uploadImage(file);
+
+
+                console.log(
+                    "Uploaded image:",
+                    imageUrl
+                );
+
+
+                // Hatua ya pili:
+                // Hifadhi Advertisement pamoja na image URL
+                await api(
+                    "/advertisements",
+                    {
+                        method: "POST",
+
+                        body: {
+
+                            title:
+                                titleInput.value,
+
+                            price:
+                                priceInput.value
+                                    ? Number(priceInput.value)
+                                    : null,
+
+                            description:
+                                descriptionInput.value || null,
+
+                            image_url:
+                                imageUrl,
+
+                            is_published:
+                                true
+                        }
+                    }
+                );
+
+
+                alert(
+                    "Advertisement imepostiwa kikamilifu!"
+                );
+
+
+                // Safisha form
+                form.reset();
+
+                imagePreview.src = "";
+
+                imagePreview.style.display = "none";
+
+
+                // Reload advertisements
+                loadAdvertisements();
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Error: " + error.message
+                );
+            }
+        }
+    );
+
+
+    // Load advertisements page ikifunguka
+    loadAdvertisements();
+
+</script>
+
+</body>
+
+</html>

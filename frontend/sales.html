@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="sw">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Sales - SHOPMANAGER</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+</head>
+
+<body>
+
+<div id="nav"></div>
+
+
+<main class="container">
+
+    <h1>Record Sale</h1>
+
+
+    <!-- Form ya kurekodi mauzo -->
+    <form
+        id="salesForm"
+        class="card"
+    >
+
+        <h2>Products Sold</h2>
+
+
+        <!-- Hapa rows za products zitaongezwa -->
+        <div id="saleRows"></div>
+
+
+        <button
+            type="button"
+            id="addProductBtn"
+        >
+            + Add Product
+        </button>
+
+
+        <br><br>
+
+
+        <!-- Payment method -->
+        <label for="paymentMethod">
+            Payment Method
+        </label>
+
+        <select id="paymentMethod">
+
+            <option value="Cash">
+                Cash
+            </option>
+
+            <option value="Mobile Money">
+                Mobile Money
+            </option>
+
+            <option value="Bank">
+                Bank
+            </option>
+
+            <option value="Card">
+                Card
+            </option>
+
+            <option value="Other">
+                Other
+            </option>
+
+        </select>
+
+
+        <br><br>
+
+
+        <button
+            type="submit"
+            id="recordSaleBtn"
+        >
+            Record Sale
+        </button>
+
+
+        <!-- Ujumbe wa success/error -->
+        <p id="saleMessage"></p>
+
+    </form>
+
+
+    <hr>
+
+
+    <h2>Sales History</h2>
+
+
+    <!-- Sales zilizorekodiwa zitaonekana hapa -->
+    <div
+        id="salesHistory"
+        class="cards"
+    ></div>
+
+</main>
+
+
+<script src="js/api.js"></script>
+
+
+<script>
+
+    // ----------------------------------------
+    // Tunapata elements kutoka HTML
+    // ----------------------------------------
+
+    const salesForm =
+        document.getElementById("salesForm");
+
+    const saleRows =
+        document.getElementById("saleRows");
+
+    const addProductBtn =
+        document.getElementById("addProductBtn");
+
+    const paymentMethod =
+        document.getElementById("paymentMethod");
+
+    const recordSaleBtn =
+        document.getElementById("recordSaleBtn");
+
+    const saleMessage =
+        document.getElementById("saleMessage");
+
+    const salesHistory =
+        document.getElementById("salesHistory");
+
+
+    // Products kutoka backend
+    let products = [];
+
+
+    // ----------------------------------------
+    // LOAD PRODUCTS
+    // ----------------------------------------
+
+    async function loadProducts() {
+
+        try {
+
+            products =
+                await api("/products");
+
+
+            if (!products.length) {
+
+                saleRows.innerHTML = `
+                    <p>
+                        Hakuna bidhaa yenye stock.
+                        Tafadhali ongeza bidhaa kwanza
+                        kwenye Products.
+                    </p>
+                `;
+
+                addProductBtn.disabled = true;
+
+                return;
+            }
+
+
+            // Tunaongeza row ya kwanza
+            addProductRow();
+
+
+        } catch (error) {
+
+            console.error(
+                "Products error:",
+                error
+            );
+
+            saleMessage.textContent =
+                "Imeshindikana kupata products: "
+                + error.message;
+        }
+    }
+
+
+    // ----------------------------------------
+    // ADD PRODUCT ROW
+    // ----------------------------------------
+
+    function addProductRow() {
+
+        // Tunapata products ambazo bado ziko stock
+        const availableProducts =
+            products.filter(
+                product =>
+                    Number(product.stock_quantity) > 0
+            );
+
+
+        if (!availableProducts.length) {
+
+            saleMessage.textContent =
+                "Hakuna bidhaa yenye stock.";
+
+            return;
+        }
+
+
+        // Tunatengeneza div mpya
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "sale-row";
+
+
+        // Select ya product
+        const productSelect =
+            document.createElement("select");
+
+        productSelect.className =
+            "productSelect";
+
+
+        availableProducts.forEach(
+            product => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    product.id;
+
+                option.textContent =
+                    `${product.name} - Stock: ${product.stock_quantity} - TZS ${Number(product.selling_price).toLocaleString()}`;
+
+                productSelect.appendChild(option);
+            }
+        );
+
+
+        // Quantity input
+        const quantityInput =
+            document.createElement("input");
+
+        quantityInput.type =
+            "number";
+
+        quantityInput.min =
+            "1";
+
+        quantityInput.value =
+            "1";
+
+        quantityInput.className =
+            "quantityInput";
+
+
+        // Remove button
+        const removeBtn =
+            document.createElement("button");
+
+        removeBtn.type =
+            "button";
+
+        removeBtn.textContent =
+            "Remove";
+
+
+        removeBtn.onclick =
+            function () {
+
+                row.remove();
+
+            };
+
+
+        // Tunaweka elements kwenye row
+        row.appendChild(productSelect);
+
+        row.appendChild(quantityInput);
+
+        row.appendChild(removeBtn);
+
+
+        // Tunaweka row kwenye page
+        saleRows.appendChild(row);
+    }
+
+
+    // ----------------------------------------
+    // ADD PRODUCT BUTTON
+    // ----------------------------------------
+
+    addProductBtn.addEventListener(
+        "click",
+        function () {
+
+            addProductRow();
+
+        }
+    );
+
+
+    // ----------------------------------------
+    // RECORD SALE
+    // ----------------------------------------
+
+    salesForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            saleMessage.textContent =
+                "Inarekodi sale...";
+
+
+            // Tunapata rows zote
+            const rows =
+                document.querySelectorAll(
+                    ".sale-row"
+                );
+
+
+            if (!rows.length) {
+
+                saleMessage.textContent =
+                    "Tafadhali chagua product.";
+
+                return;
+            }
+
+
+            // Tunatengeneza items
+            const items = [];
+
+
+            for (
+                const row of rows
+            ) {
+
+                const productSelect =
+                    row.querySelector(
+                        ".productSelect"
+                    );
+
+                const quantityInput =
+                    row.querySelector(
+                        ".quantityInput"
+                    );
+
+
+                const productId =
+                    Number(
+                        productSelect.value
+                    );
+
+
+                const quantity =
+                    Number(
+                        quantityInput.value
+                    );
+
+
+                // Validation
+                if (
+                    !productId ||
+                    !quantity ||
+                    quantity < 1
+                ) {
+
+                    saleMessage.textContent =
+                        "Product na quantity lazima zijazwe vizuri.";
+
+                    return;
+                }
+
+
+                items.push({
+
+                    product_id:
+                        productId,
+
+                    quantity:
+                        quantity
+
+                });
+            }
+
+
+            // Tunatengeneza request body
+            const saleData = {
+
+                items: items,
+
+                payment_method:
+                    paymentMethod.value
+
+            };
+
+
+            try {
+
+                recordSaleBtn.disabled =
+                    true;
+
+                recordSaleBtn.textContent =
+                    "Saving...";
+
+
+                // Tunatuma sale kwenda FastAPI
+                const sale =
+                    await api(
+                        "/sales",
+                        {
+                            method: "POST",
+                            body: saleData
+                        }
+                    );
+
+
+                // Success message
+                saleMessage.textContent =
+                    `Sale imehifadhiwa! ` +
+                    `Revenue: TZS ${Number(
+                        sale.total_amount
+                    ).toLocaleString()} | ` +
+                    `Profit: TZS ${Number(
+                        sale.profit
+                    ).toLocaleString()}`;
+
+
+                // Safisha rows
+                saleRows.innerHTML =
+                    "";
+
+
+                // Refresh products ili stock mpya ionekane
+                products =
+                    await api("/products");
+
+
+                // Ongeza row mpya
+                if (products.length) {
+
+                    addProductRow();
+
+                }
+
+
+                // Refresh history
+                await loadSales();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Record sale error:",
+                    error
+                );
+
+
+                saleMessage.textContent =
+                    "Sale haikurekodiwa: "
+                    + error.message;
+
+
+            } finally {
+
+                recordSaleBtn.disabled =
+                    false;
+
+                recordSaleBtn.textContent =
+                    "Record Sale";
+            }
+        }
+    );
+
+
+    // ----------------------------------------
+    // LOAD SALES HISTORY
+    // ----------------------------------------
+
+    async function loadSales() {
+
+        try {
+
+            const sales =
+                await api("/sales");
+
+
+            if (!sales.length) {
+
+                salesHistory.innerHTML =
+                    "<p>Hakuna sales bado.</p>";
+
+                return;
+            }
+
+
+            salesHistory.innerHTML =
+                sales.map(
+                    sale => `
+
+                        <div class="card">
+
+                            <h3>
+                                Sale #${sale.id}
+                            </h3>
+
+                            <p>
+                                <strong>
+                                    Payment:
+                                </strong>
+                                ${sale.payment_method}
+                            </p>
+
+                            <p>
+                                <strong>
+                                    Revenue:
+                                </strong>
+                                TZS ${Number(
+                                    sale.total_amount
+                                ).toLocaleString()}
+                            </p>
+
+                            <p>
+                                <strong>
+                                    Cost:
+                                </strong>
+                                TZS ${Number(
+                                    sale.total_cost
+                                ).toLocaleString()}
+                            </p>
+
+                            <p>
+                                <strong>
+                                    Profit:
+                                </strong>
+                                TZS ${Number(
+                                    sale.profit
+                                ).toLocaleString()}
+                            </p>
+
+                            <p>
+                                <strong>
+                                    Date:
+                                </strong>
+                                ${new Date(
+                                    sale.created_at
+                                ).toLocaleString()}
+                            </p>
+
+                        </div>
+
+                    `
+                ).join("");
+
+
+        } catch (error) {
+
+            console.error(
+                "Sales history error:",
+                error
+            );
+
+            salesHistory.innerHTML =
+                `<p>
+                    Imeshindikana kupata sales:
+                    ${error.message}
+                </p>`;
+        }
+    }
+
+
+    // ----------------------------------------
+    // ANZISHA SALES PAGE
+    // ----------------------------------------
+
+    async function initSalesPage() {
+
+        await loadProducts();
+
+        await loadSales();
+
+    }
+
+
+    initSalesPage();
+
+</script>
+
+</body>
+
+</html>

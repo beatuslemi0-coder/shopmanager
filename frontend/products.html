@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="sw">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Products</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main class="container">
+      <h1>Products & Stock</h1>
+      <form id="f" class="card">
+        <input id="n" placeholder="Product name" required /><input
+          id="buy"
+          type="number"
+          min="0"
+          placeholder="Buying price"
+          required
+        /><input
+          id="sell"
+          type="number"
+          min="0"
+          placeholder="Selling price"
+          required
+        /><input
+          id="stock"
+          type="number"
+          min="0"
+          placeholder="Stock"
+          required
+        /><input
+          id="min"
+          type="number"
+          min="0"
+          value="5"
+          placeholder="Minimum stock"
+        /><input id="sku" placeholder="SKU" /><textarea
+          id="d"
+          placeholder="Description"
+        ></textarea
+        ><button>Add Product</button>
+      </form>
+      <div id="list" class="cards"></div>
+    </main>
+    <script src="js/api.js"></script>
+    <script>
+      async function load() {
+        let a = await api("/products");
+        list.innerHTML = a
+          .map(
+            (x) =>
+              `<div class="card"><h3>${x.name}</h3><p>Buy TZS ${Number(x.buying_price).toLocaleString()} | Sell TZS ${Number(x.selling_price).toLocaleString()}</p><p>Stock ${x.stock_quantity}</p><p>Unit profit TZS ${(Number(x.selling_price) - Number(x.buying_price)).toLocaleString()}</p></div>`,
+          )
+          .join("");
+      }
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        await api("/products", {
+          method: "POST",
+          body: {
+            name: n.value,
+            buying_price: +buy.value,
+            selling_price: +sell.value,
+            stock_quantity: +stock.value,
+            minimum_stock: +min.value,
+            sku: sku.value || null,
+            description: d.value || null,
+          },
+        });
+        f.reset();
+        load();
+      };
+      load();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="sw">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <main class="auth">
+      <form id="f" class="card">
+        <h1>Login</h1>
+        <input id="e" type="email" placeholder="Email" required /><input
+          id="p"
+          type="password"
+          placeholder="Password"
+          required
+        /><button>Ingia</button>
+        <p id="m"></p>
+        <a href="register.html">Register</a>
+      </form>
+    </main>
+    <script src="js/api.js"></script>
+    <script>
+      f.onsubmit = async (x) => {
+        x.preventDefault();
+        try {
+          await login(e.value, p.value);
+          location.href = "dashboard.html";
+        } catch (q) {
+          m.textContent = q.message;
+        }
+      };
+    </script>
+  </body>
+</html>
