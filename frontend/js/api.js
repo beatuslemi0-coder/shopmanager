@@ -60,7 +60,7 @@ async function api(path, opt = {}) {
 async function login(e, p) {
 
     // Tunatuma login details kwenda FastAPI
-    const x = await api("v1/auth/login", {
+    const x = await api("/auth/login", {
 
         method: "POST",
 
@@ -91,7 +91,7 @@ async function login(e, p) {
 async function register(n, e, p) {
 
     // Tunatuma registration details kwenda backend
-    const x = await api("v1/auth/register", {
+    const x = await api("/auth/register", {
 
         method: "POST",
 
