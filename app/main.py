@@ -24,7 +24,7 @@ origins = [origin.strip() for origin in raw_origins.split(".") if origin.strip()
 # CORS inaruhusu frontend kuwasiliana na backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.cors_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
