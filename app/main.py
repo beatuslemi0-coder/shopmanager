@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.v1.router import api_router
+import os
 
 
 
@@ -15,6 +16,9 @@ app = FastAPI(
     title="SHOPMANAGER API",
     version="1.0.0",
 )
+
+raw_origins = os.getenv("COR_ORIGINS","*")
+origins = [origin.strip() for origin in raw_origins.split(".") if origin.strip()]
 
 
 # CORS inaruhusu frontend kuwasiliana na backend
