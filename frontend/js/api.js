@@ -27,8 +27,8 @@ async function api(path, opt = {}) {
     }
 
     // Tunatuma request kwenda FastAPI
-    const cleanPath = path.startWith('/') ? path : '/' + path;
-    const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0,-1) : API_BASE;
+    const cleanPath = (typeof path === "string" && path.startsWith('/')) ? path : '/' + (path || '');
+    const cleanBase = (typeof API_BASE === "string" && API_BASE.endsWith('/')) ? API_BASE.slice(0,-1) : API_BASE;
     const r = await fetch(cleanBase + cleanPath, {
 
         method: opt.method || "GET",
