@@ -3,7 +3,7 @@
 // ======================================================
 
 // URL ya backend yetu ya FastAPI
-const API_BASE = " https://shopmanager-wwn6.onrender.com";
+const API_BASE = " https://shopmanager-wwn6.onrender.com/api";
 
 
 // ======================================================
