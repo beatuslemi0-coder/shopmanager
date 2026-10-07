@@ -1,86 +1,372 @@
 <!doctype html>
+
 <html lang="sw">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
-  <body>
-    <div id="nav"></div>
-    <main class="container">
-      <div class="top">
-        <h1>Dashboard</h1>
-        <button onclick="logout()">Logout</button>
-      </div>
-      <p id="welcome"></p>
-      <div id="stats" class="grid"></div>
-      <div class="card">
-        <h2>Business Profile</h2>
-        <form id="b">
-          <input id="bn" placeholder="Business name" required /><input
-            id="on"
-            placeholder="Owner name"
-            required
-          /><input id="ph" placeholder="Phone" /><input
-            id="loc"
-            placeholder="Location"
-          /><input id="cat" placeholder="Category" /><input
-            id="addr"
-            placeholder="Address"
-          /><textarea id="desc" placeholder="Description"></textarea
-          ><button>Save</button>
-        </form>
-        <p id="msg"></p>
-      </div>
-    </main>
-    <script src="js/api.js"></script>
-    <script>
-      async function load() {
-        let u = JSON.parse(localStorage.shop_user || "{}");
-        welcome.textContent = "Karibu, " + u.full_name;
-        let r = await api("/reports/dashboard");
+
+<head>
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+
+  <title>Dashboard</title>
+
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+
+<body>
+
+
+  <div id="nav"></div>
+
+  <main class="container">
+
+    
+
+    <div class="top">
+
+      <h1 data-i18n="dashboard">
+        Dashboard
+      </h1>
+
+      <button onclick="logout()" data-i18n="logout">
+        Logout
+      </button>
+
+    </div>
+
+
+    <p id="welcome"></p>
+
+
+    <div id="stats" class="grid"></div>
+
+
+    <div class="card">
+
+      <h2 data-i18n="business_profile">
+        Business Profile
+      </h2>
+
+
+      <form id="b">
+
+        <!-- Business Name -->
+
+        <input
+          id="bn"
+          data-i18n-placeholder="business_name"
+          placeholder="Business name"
+          required
+        />
+
+
+        <!-- Owner Name -->
+
+        <input
+          id="on"
+          data-i18n-placeholder="owner_name"
+          placeholder="Owner name"
+          required
+        />
+
+
+        <!-- Phone -->
+
+        <input
+          id="ph"
+          data-i18n-placeholder="phone"
+          placeholder="Phone"
+        />
+
+
+        <!-- Location -->
+
+        <input
+          id="loc"
+          data-i18n-placeholder="location"
+          placeholder="Location"
+        />
+
+
+        <!-- Category -->
+
+        <input
+          id="cat"
+          data-i18n-placeholder="category"
+          placeholder="Category"
+        />
+
+
+        <!-- Address -->
+
+        <input
+          id="addr"
+          data-i18n-placeholder="address"
+          placeholder="Address"
+        />
+
+
+        <!-- Description -->
+
+        <textarea
+          id="desc"
+          data-i18n-placeholder="description"
+          placeholder="Description"
+        ></textarea>
+
+
+        <!-- Save Button -->
+
+        <button
+          type="submit"
+          data-i18n="save"
+        >
+          Save
+        </button>
+
+      </form>
+
+
+      <!-- Success / Error Message -->
+
+      <p id="msg"></p>
+
+    </div>
+
+  </main>
+
+
+  <script src="js/api.js"></script>
+
+
+
+  <script>
+
+
+    async function load() {
+
+      try {
+
+        let u = JSON.parse(
+          localStorage.shop_user || "{}"
+        );
+
+        welcome.textContent =
+          t("welcome") +
+          ", " +
+          (u.full_name || "");
+
+
+        // GET DASHBOARD REPORT
+
+        let r = await api(
+          "/reports/dashboard"
+        );
+
+        // DASHBOARD STATISTICS
+
         stats.innerHTML = [
-          ["Mapato", r.revenue],
-          ["Cost", r.cost_of_goods],
-          ["Faida", r.net_profit],
-          ["Expenses", r.expenses],
-          ["Bidhaa", r.total_products],
-          ["Low stock", r.low_stock_products],
-          ["Customers", r.total_customers],
+
+          [
+            "revenue",
+            r.revenue
+          ],
+
+          [
+            "cost",
+            r.cost_of_goods
+          ],
+
+          [
+            "profit",
+            r.net_profit
+          ],
+
+          [
+            "expenses_label",
+            r.expenses
+          ],
+
+          [
+            "products_label",
+            r.total_products
+          ],
+
+          [
+            "low_stock",
+            r.low_stock_products
+          ],
+
+          [
+            "customers_label",
+            r.total_customers
+          ]
+
         ]
+
           .map(
-            (x) =>
-              `<div class="stat"><span>${x[0]}</span><b>TZS ${Number(x[1]).toLocaleString()}</b></div>`,
+
+            x => `<div class="stat">
+                <span>
+                  ${t(x[0])}
+                </span>
+
+                <b>
+                  TZS ${Number(x[1]).toLocaleString()}
+                </b>
+
+              </div>
+
+            `
+
           )
+
           .join("");
-        let x = await api("/businesses/me");
+
+
+        // GET BUSINESS PROFILE
+
+        let x = await api(
+          "/businesses/me"
+        );
+
+        // FILL BUSINESS PROFILE FORM
+
         if (x) {
-          bn.value = x.name;
-          on.value = x.owner_name;
-          ph.value = x.phone || "";
-          loc.value = x.location || "";
-          cat.value = x.category || "";
-          addr.value = x.address || "";
-          desc.value = x.description || "";
+
+          bn.value =
+            x.name || "";
+
+          on.value =
+            x.owner_name || "";
+
+          ph.value =
+            x.phone || "";
+
+          loc.value =
+            x.location || "";
+
+          cat.value =
+            x.category || "";
+
+          addr.value =
+            x.address || "";
+
+          desc.value =
+            x.description || "";
+
         }
+
+      } catch (error) {
+
+        console.error(
+          "Dashboard loading error:",
+          error
+        );
+
+        msg.textContent =
+          error.message;
+
       }
-      b.onsubmit = async (e) => {
-        e.preventDefault();
+
+    }
+
+
+    // SAVE / UPDATE BUSINESS PROFILE
+
+    b.onsubmit = async (e) => {
+
+      // Zuia page isireload
+      e.preventDefault();
+
+
+      try {
+
+        // BUSINESS PROFILE DATA
+
         let d = {
-          name: bn.value,
-          owner_name: on.value,
-          phone: ph.value || null,
-          location: loc.value || null,
-          category: cat.value || null,
-          address: addr.value || null,
-          description: desc.value || null,
+
+          name:
+            bn.value,
+
+          owner_name:
+            on.value,
+
+          phone:
+            ph.value || null,
+
+          location:
+            loc.value || null,
+
+          category:
+            cat.value || null,
+
+          address:
+            addr.value || null,
+
+          description:
+            desc.value || null
+
         };
-        let x = await api("/businesses/me");
-        await api("/businesses/me", { method: x ? "PUT" : "POST", body: d });
-        msg.textContent = "Business profile saved";
-      };
-      load();
-    </script>
-  </body>
+
+
+        // CHECK IF BUSINESS PROFILE EXISTS
+
+        let x = await api(
+          "/businesses/me"
+        );
+
+        // CREATE OR UPDATE
+
+        await api(
+          "/businesses/me",
+          {
+
+            method:
+              x
+                ? "PUT"
+                : "POST",
+
+            body:
+              d
+
+          }
+        );
+
+
+        // SUCCESS MESSAGE
+
+        msg.textContent =
+          currentLanguage === "sw"
+            ? "Taarifa za biashara zimehifadhiwa"
+            : "Business profile saved";
+
+
+      } catch (error) {
+
+        // ERROR MESSAGE
+
+        console.error(
+          "Business profile error:",
+          error
+        );
+
+        msg.textContent =
+          error.message;
+
+      }
+
+    };
+
+
+    // START DASHBOARD
+
+    load();
+
+  </script>
+
+</body>
+
 </html>
