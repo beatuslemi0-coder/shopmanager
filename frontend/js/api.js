@@ -1,7 +1,7 @@
 
 
 // URL ya backend yetu ya FastAPI
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_BASE = "https://shopmanager-wwn6.onrender.com/api/v1";
 
 
 // Tunachukua lugha iliyohifadhiwa kwenye browser.
