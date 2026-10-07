@@ -1,7 +1,7 @@
 
 
 // URL ya backend yetu ya FastAPI
-const API_BASE = "https://shopmanager-wwn6.onrender.com/api/v1";
+const API_BASE = "http://127.0.0.1:8000/api/v1";
 
 
 // Tunachukua lugha iliyohifadhiwa kwenye browser.
@@ -708,32 +708,33 @@ function applyLanguage() {
 
 function nav() {
 
-    // Tunatafuta div yenye id="nav".
+    const n = document.getElementById("nav");
 
-    const navContainer =
-        document.getElementById("nav");
-
-
-    // Kama page haina nav, tunaondoka.
-
-    if (!navContainer) {
-        return;
-    }
+    if (!n) return;
 
 
-    // Tunatengeneza navigation.
-
-    navContainer.innerHTML = `
+    n.innerHTML = `
 
         <header class="header">
 
-            <!-- SHOPMANAGER LOGO -->
-            <b>SHOPMANAGER</b>
+            <!-- LOGO -->
+            <div class="brand">
+
+                <a href="dashboard.html" class="brand-link">
+
+                    <img
+                        src="images/shopmanager-logo.png"
+                        alt="SHOPMANAGER"
+                        class="site-logo"
+                    >
+
+                </a>
+
+            </div>
 
 
-            <!-- NAVIGATION LINKS -->
-
-            <nav>
+            <!-- Navigation -->
+            <nav class="main-nav">
 
                 <a href="dashboard.html">
                     ${t("dashboard")}
@@ -770,8 +771,7 @@ function nav() {
             </nav>
 
 
-            <!-- LANGUAGE SELECTOR -->
-
+            <!-- Language -->
             <div class="language-box">
 
                 <label for="languageSelect">
@@ -784,11 +784,11 @@ function nav() {
                 >
 
                     <option value="en">
-                        ${t("english")}
+                        English
                     </option>
 
                     <option value="sw">
-                        ${t("swahili")}
+                        Kiswahili
                     </option>
 
                 </select>
@@ -796,26 +796,18 @@ function nav() {
             </div>
 
         </header>
+
     `;
 
 
-    // Tunahakikisha selector inaonyesha
-    // lugha iliyochaguliwa.
-
     const languageSelect =
-        document.getElementById(
-            "languageSelect"
-        );
+        document.getElementById("languageSelect");
 
 
     if (languageSelect) {
-
-        languageSelect.value =
-            currentLanguage;
-
+        languageSelect.value = currentLanguage;
     }
 }
-
 
 // ============================================================
 // 12. UPLOAD IMAGE

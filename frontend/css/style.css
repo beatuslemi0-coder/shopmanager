@@ -237,3 +237,324 @@ button,
     border: 1px solid white;
     cursor: pointer;
 }
+
+/* =========================================
+   SHOPMANAGER HEADER
+   ========================================= */
+
+.header {
+    width: 100%;
+    min-height: 85px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 25px;
+
+    padding: 8px 25px;
+
+    box-sizing: border-box;
+
+    background: #101828;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+
+/* =========================================
+   LOGO
+   ========================================= */
+
+.brand {
+    flex-shrink: 0;
+}
+
+
+.brand-link {
+    display: flex;
+    align-items: center;
+
+    text-decoration: none;
+}
+
+
+.site-logo {
+    display: block;
+
+    width: 500px;
+    height: auto;
+
+    max-height: 75px;
+
+    object-fit: contain;
+
+    transition: transform 0.2s ease;
+}
+
+
+.site-logo:hover {
+    transform: scale(1.03);
+}
+
+
+/* =========================================
+   MAIN NAVIGATION
+   ========================================= */
+
+.main-nav {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 14px;
+
+    flex: 1;
+
+    flex-wrap: wrap;
+}
+
+
+.main-nav a {
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+    color: #173b78;
+
+    padding: 8px 5px;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.main-nav a:hover {
+    color: #f28c00;
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================
+   LANGUAGE
+   ========================================= */
+
+.language-box {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    flex-shrink: 0;
+}
+
+
+.language-box label {
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #173b78;
+}
+
+
+.language-box select {
+    padding: 7px 9px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    outline: none;
+}
+
+
+.language-box select:focus {
+    border-color: #f28c00;
+}
+
+
+/* =========================================
+   TABLET
+   ========================================= */
+
+@media (max-width: 1100px) {
+
+    .header {
+        gap: 15px;
+
+        padding: 8px 15px;
+    }
+
+
+    .site-logo {
+        width: 150px;
+    }
+
+
+    .main-nav {
+        gap: 8px;
+    }
+
+
+    .main-nav a {
+        font-size: 13px;
+
+        padding: 7px 3px;
+    }
+
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    .header {
+
+        min-height: auto;
+
+        padding: 10px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 10px;
+
+        position: relative;
+    }
+
+
+    /* Logo iwe centered */
+    .brand {
+        display: flex;
+
+        justify-content: center;
+
+        width: 100%;
+    }
+
+
+    .site-logo {
+        width: 900px;
+
+        max-width: 70vw;
+
+        max-height: 100px;
+    }
+
+
+    /* Navigation iwe responsive */
+    .main-nav {
+
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 6px;
+
+        flex: none;
+    }
+
+
+    .main-nav a {
+
+        text-align: center;
+
+        padding: 10px 5px;
+
+        background: #f5f7fa;
+
+        border-radius: 6px;
+
+        font-size: 13px;
+    }
+
+
+    .main-nav a:hover {
+
+        background: #fff3df;
+
+        transform: none;
+    }
+
+
+    /* Language iwe chini */
+    .language-box {
+
+        width: 100%;
+
+        justify-content: center;
+
+        padding-top: 5px;
+    }
+
+
+    .language-box select {
+
+        min-width: 130px;
+    }
+
+}
+
+
+/* =========================================
+   SMALL PHONES
+   ========================================= */
+
+@media (max-width: 400px) {
+
+    .site-logo {
+        width: 145px;
+    }
+
+
+    .main-nav {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 5px;
+    }
+
+
+    .main-nav a {
+
+        font-size: 12px;
+
+        padding: 8px 3px;
+    }
+
+
+    .language-box label {
+
+        font-size: 12px;
+    }
+
+}
