@@ -1,7 +1,7 @@
 
 
 // URL ya backend yetu ya FastAPI
-const API_BASE = "https://shopmanager-wwn6.onrender.com/api/v1";
+const API_BASE = "http://127.0.0.1:8000/api/v1";
 
 
 // Tunachukua lugha iliyohifadhiwa kwenye browser.
@@ -733,8 +733,20 @@ function nav() {
             </div>
 
 
+            <!-- Hamburger button - itaonekana kwenye simu tu -->
+            <button
+                type="button"
+                class="menu-toggle"
+                id="menuToggle"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+            >
+                ☰
+            </button>
+
+
             <!-- Navigation -->
-            <nav class="main-nav">
+            <nav class="main-nav" id="mainNav">
 
                 <a href="dashboard.html">
                     ${t("dashboard")}
@@ -800,13 +812,75 @@ function nav() {
     `;
 
 
+    // Language select
     const languageSelect =
         document.getElementById("languageSelect");
-
 
     if (languageSelect) {
         languageSelect.value = currentLanguage;
     }
+
+
+    // Hamburger menu
+    const menuToggle =
+        document.getElementById("menuToggle");
+
+    const mainNav =
+        document.getElementById("mainNav");
+
+
+    if (menuToggle && mainNav) {
+
+        menuToggle.addEventListener(
+            "click",
+            function () {
+
+                mainNav.classList.toggle("menu-open");
+
+
+                const isOpen =
+                    mainNav.classList.contains("menu-open");
+
+
+                menuToggle.setAttribute(
+                    "aria-expanded",
+                    isOpen ? "true" : "false"
+                );
+
+
+                // Badilisha icon
+                menuToggle.textContent =
+                    isOpen ? "✕" : "☰";
+
+            }
+        );
+
+
+        // Funga menu baada ya kuchagua page
+        mainNav.querySelectorAll("a").forEach(link => {
+
+            link.addEventListener(
+                "click",
+                function () {
+
+                    mainNav.classList.remove(
+                        "menu-open"
+                    );
+
+                    menuToggle.textContent = "☰";
+
+                    menuToggle.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                }
+            );
+
+        });
+
+    }
+
 }
 
 // ============================================================
