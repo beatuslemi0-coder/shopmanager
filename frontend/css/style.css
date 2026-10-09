@@ -677,4 +677,57 @@ button,
     }
 }
 
+/* =========================================================
+   MOBILE LANGUAGE SELECTOR
+   ========================================================= */
+
+/* Kwa computer isionekane */
+.mobile-language-box {
+    display: none;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .mobile-language-box {
+        display: flex;
+
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+
+        margin-top: 8px;
+        padding: 12px 10px;
+
+        border-top: 1px solid #e5e7eb;
+
+        color: #173b78;
+
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+
+    .mobile-language-box select {
+        padding: 7px 10px;
+
+        border: 1px solid #d1d5db;
+
+        border-radius: 6px;
+
+        background: #ffffff;
+
+        color: #173b78;
+
+        font-size: 14px;
+
+        cursor: pointer;
+    }
+}
+
 

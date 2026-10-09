@@ -1,8 +1,19 @@
+// ============================================================
+// SHOPMANAGER - API.JS
+// ============================================================
 
+
+// ============================================================
+// 1. BACKEND URL
+// ============================================================
 
 // URL ya backend yetu ya FastAPI
 const API_BASE = "https://shopmanager-wwn6.onrender.com/api/v1";
 
+
+// ============================================================
+// 2. CURRENT LANGUAGE
+// ============================================================
 
 // Tunachukua lugha iliyohifadhiwa kwenye browser.
 // Kama hakuna lugha iliyowahi kuchaguliwa, tunatumia English.
@@ -10,13 +21,19 @@ let currentLanguage =
     localStorage.getItem("shop_language") || "en";
 
 
+// ============================================================
+// 3. TRANSLATIONS
+// ============================================================
+
 const translations = {
 
+    // ========================================================
+    // ENGLISH
+    // ========================================================
 
     en: {
 
         // Navigation
-
         dashboard: "Dashboard",
         products: "Products",
         sales: "Sales",
@@ -27,13 +44,11 @@ const translations = {
         marketplace: "Marketplace",
 
         // Language
-
         language: "Language",
         english: "English",
         swahili: "Kiswahili",
 
         // General
-
         save: "Save",
         delete: "Delete",
         edit: "Edit",
@@ -56,10 +71,7 @@ const translations = {
         date: "Date",
         total: "Total",
 
-        // -------------------------------
         // Dashboard
-        // -------------------------------
-
         welcome: "Welcome",
         business_profile: "Business Profile",
 
@@ -80,10 +92,7 @@ const translations = {
         low_stock: "Low stock",
         customers_label: "Customers",
 
-        // -------------------------------
         // Products
-        // -------------------------------
-
         product: "Product",
         product_name: "Product name",
         buying_price: "Buying price",
@@ -95,10 +104,7 @@ const translations = {
         product_list: "Product List",
         stock: "Stock",
 
-        // -------------------------------
         // Sales
-        // -------------------------------
-
         record_sale: "Record Sale",
         quantity: "Quantity",
         payment_method: "Payment method",
@@ -113,10 +119,7 @@ const translations = {
         sales_count: "Sales Count",
         products_sold: "Products Sold",
 
-        // -------------------------------
         // Expenses
-        // -------------------------------
-
         expense: "Expense",
         expense_category: "Category",
         amount: "Amount",
@@ -125,10 +128,7 @@ const translations = {
         add_expense: "Add Expense",
         expense_list: "Expense List",
 
-        // -------------------------------
         // Customers
-        // -------------------------------
-
         customer: "Customer",
         customer_name: "Customer name",
         email: "Email",
@@ -138,16 +138,12 @@ const translations = {
         add_customer: "Add Customer",
         customer_list: "Customer List",
 
-        all_customers: "all customers",
+        all_customers: "All Customers",
         name: "Name",
-        actions: "Actions",
         refresh: "Refresh",
-        id: "Id",
+        id: "ID",
 
-        // -------------------------------
         // Reports
-        // -------------------------------
-
         reports_title: "Reports",
         profit_loss: "Profit & Loss",
 
@@ -169,10 +165,7 @@ const translations = {
         monthly_report: "Monthly Report",
         yearly_report: "Yearly Report",
 
-        // -------------------------------
         // Advertisements
-        // -------------------------------
-
         advertisement: "Advertisement",
         advertisements: "Advertisements",
         title: "Title",
@@ -183,19 +176,14 @@ const translations = {
         select_product_image: "Select product image",
         my_advertisements: "My Advertisements",
 
-        // -------------------------------
         // Marketplace
-        // -------------------------------
-
         marketplace_title: "Marketplace",
-        marketplace_description: "Browse products from different businesses",
+        marketplace_description:
+            "Browse products from different businesses",
         view_product: "View Product",
         contact_seller: "Contact Seller",
 
-        // -------------------------------
         // Messages
-        // -------------------------------
-
         saved_successfully: "Saved successfully",
         deleted_successfully: "Deleted successfully",
         updated_successfully: "Updated successfully",
@@ -206,14 +194,13 @@ const translations = {
     },
 
 
+    // ========================================================
     // KISWAHILI
+    // ========================================================
 
     sw: {
 
-        // -------------------------------
         // Navigation
-        // -------------------------------
-
         dashboard: "Dashibodi",
         products: "Bidhaa",
         sales: "Mauzo",
@@ -224,13 +211,11 @@ const translations = {
         marketplace: "Soko",
 
         // Language
-
         language: "Lugha",
         english: "English",
         swahili: "Kiswahili",
 
         // General
-
         save: "Hifadhi",
         delete: "Futa",
         edit: "Hariri",
@@ -254,7 +239,6 @@ const translations = {
         total: "Jumla",
 
         // Dashboard
-
         welcome: "Karibu",
         business_profile: "Taarifa za Biashara",
 
@@ -276,7 +260,6 @@ const translations = {
         customers_label: "Wateja",
 
         // Products
-
         product: "Bidhaa",
         product_name: "Jina la bidhaa",
         buying_price: "Bei ya kununua",
@@ -289,7 +272,6 @@ const translations = {
         stock: "Stock",
 
         // Sales
-
         record_sale: "Rekodi Mauzo",
         quantity: "Idadi",
         payment_method: "Njia ya malipo",
@@ -305,8 +287,6 @@ const translations = {
         products_sold: "Bidhaa Zilizouzwa",
 
         // Expenses
-
-
         expense: "Matumizi",
         expense_category: "Aina ya matumizi",
         amount: "Kiasi",
@@ -316,7 +296,6 @@ const translations = {
         expense_list: "Orodha ya Matumizi",
 
         // Customers
-
         customer: "Mteja",
         customer_name: "Jina la mteja",
         email: "Barua pepe",
@@ -326,14 +305,12 @@ const translations = {
         add_customer: "Ongeza Mteja",
         customer_list: "Orodha ya Wateja",
 
-        all_customers: "wateja wote",
+        all_customers: "Wateja Wote",
         name: "Jina",
-        actions: "Vitendo",
-        refresh: "Onyesha upya",
-        id: "namba",
+        refresh: "Onyesha Upya",
+        id: "Namba",
 
         // Reports
-
         reports_title: "Ripoti",
         profit_loss: "Faida na Hasara",
 
@@ -356,7 +333,6 @@ const translations = {
         yearly_report: "Ripoti ya Mwaka",
 
         // Advertisements
-
         advertisement: "Tangazo",
         advertisements: "Matangazo",
         title: "Kichwa",
@@ -364,23 +340,17 @@ const translations = {
         image: "Picha",
         publish: "Chapisha",
         create_advertisement: "Tengeneza Tangazo",
-        select_product_image: "Chagua picha ya didhaa",
-        my_advertisements: "Matangazo yangu",
+        select_product_image: "Chagua picha ya bidhaa",
+        my_advertisements: "Matangazo Yangu",
 
-        // -------------------------------
         // Marketplace
-        // -------------------------------
-
         marketplace_title: "Soko",
         marketplace_description:
             "Angalia bidhaa kutoka kwenye biashara mbalimbali",
         view_product: "Angalia Bidhaa",
         contact_seller: "Wasiliana na Muuzaji",
 
-        // -------------------------------
         // Messages
-        // -------------------------------
-
         saved_successfully: "Imehifadhiwa kwa mafanikio",
         deleted_successfully: "Imefutwa kwa mafanikio",
         updated_successfully: "Imesasishwa kwa mafanikio",
@@ -394,7 +364,11 @@ const translations = {
             "Tatizo limetokea kwenye majibu ya server"
     }
 };
+
+
+// ============================================================
 // 4. TRANSLATION FUNCTION
+// ============================================================
 
 function t(key) {
 
@@ -404,54 +378,38 @@ function t(key) {
     return translations[currentLanguage]?.[key] || key;
 }
 
+
+// ============================================================
 // 5. API HELPER
+// ============================================================
 
 async function api(path, opt = {}) {
-
-    // Helper huyu ndiye bridge kati ya HTML/JS
-    // na FastAPI backend.
 
     const h = {
         "Content-Type": "application/json",
         ...(opt.headers || {})
     };
 
-
-    // Tunapata token ya user aliyelogin.
-
     const token =
         localStorage.getItem("shop_token");
-
 
     // Kama request inahitaji authentication,
     // tunaweka JWT token.
 
     if (opt.auth !== false && token) {
-
         h.Authorization = "Bearer " + token;
-
     }
-
-
-    // Tunahakikisha path inaanza na /
 
     const cleanPath =
         typeof path === "string" && path.startsWith("/")
             ? path
             : "/" + (path || "");
 
-
-    // Tunahakikisha API_BASE haina /
-    // mbili mwishoni.
-
     const cleanBase =
         typeof API_BASE === "string" &&
         API_BASE.endsWith("/")
             ? API_BASE.slice(0, -1)
             : API_BASE;
-
-
-    // Tunatuma request kwenda FastAPI.
 
     const response = await fetch(
         cleanBase + cleanPath,
@@ -467,30 +425,25 @@ async function api(path, opt = {}) {
         }
     );
 
-
-    // Tunapata response kutoka backend.
-
     const data =
         await response.json().catch(() => ({
             detail: t("server_response_error")
         }));
-
-
-    // Kama backend imerudisha error.
 
     if (!response.ok) {
 
         throw new Error(
             data.detail || t("request_failed")
         );
-
     }
-
 
     return data;
 }
 
+
+// ============================================================
 // 6. LOGIN
+// ============================================================
 
 async function login(email, password) {
 
@@ -507,24 +460,23 @@ async function login(email, password) {
         }
     );
 
-
-    // Tunahifadhi JWT token.
-
     localStorage.setItem(
         "shop_token",
         data.access_token
     );
-
-
-    // Tunahifadhi taarifa za user.
 
     localStorage.setItem(
         "shop_user",
         JSON.stringify(data.user)
     );
 
+    return data;
 }
+
+
+// ============================================================
 // 7. REGISTER
+// ============================================================
 
 async function register(
     fullName,
@@ -546,46 +498,41 @@ async function register(
         }
     );
 
-
-    // Tunahifadhi token.
-
     localStorage.setItem(
         "shop_token",
         data.access_token
     );
-
-
-    // Tunahifadhi user.
 
     localStorage.setItem(
         "shop_user",
         JSON.stringify(data.user)
     );
 
+    return data;
 }
+
+
+// ============================================================
 // 8. LOGOUT
+// ============================================================
 
 function logout() {
-
-    // Tunaondoa token.
 
     localStorage.removeItem(
         "shop_token"
     );
 
-
-    // Tunaondoa user.
-
     localStorage.removeItem(
         "shop_user"
     );
 
-
-    // Tunaenda login page.
-
     location.href = "login.html";
 }
+
+
+// ============================================================
 // 9. CHANGE LANGUAGE
+// ============================================================
 
 function changeLanguage(language) {
 
@@ -598,7 +545,6 @@ function changeLanguage(language) {
         return;
     }
 
-
     // Tunahifadhi lugha.
 
     localStorage.setItem(
@@ -606,30 +552,34 @@ function changeLanguage(language) {
         language
     );
 
-
     // Tunabadilisha current language.
 
     currentLanguage = language;
-
 
     // Tunatumia translation kwenye page.
 
     applyLanguage();
 
-
     // Tunajenga navigation upya.
 
     nav();
-
 
     // Refresh page ili content inayotengenezwa
     // na JavaScript nayo ipate lugha mpya.
 
     location.reload();
 }
+
+
+// ============================================================
 // 10. APPLY LANGUAGE
+// ============================================================
 
 function applyLanguage() {
+
+    // --------------------------------------------------------
+    // A. Text content
+    // --------------------------------------------------------
 
     document
         .querySelectorAll("[data-i18n]")
@@ -639,7 +589,6 @@ function applyLanguage() {
                 element.getAttribute("data-i18n");
 
             element.textContent = t(key);
-
         });
 
 
@@ -659,7 +608,6 @@ function applyLanguage() {
                 );
 
             element.placeholder = t(key);
-
         });
 
 
@@ -679,12 +627,11 @@ function applyLanguage() {
                 );
 
             element.title = t(key);
-
         });
 
 
     // --------------------------------------------------------
-    // D. Language selector
+    // D. Desktop language selector
     // --------------------------------------------------------
 
     const languageSelect =
@@ -692,12 +639,24 @@ function applyLanguage() {
             "languageSelect"
         );
 
-
     if (languageSelect) {
-
         languageSelect.value =
             currentLanguage;
+    }
 
+
+    // --------------------------------------------------------
+    // E. Mobile language selector
+    // --------------------------------------------------------
+
+    const mobileLanguageSelect =
+        document.getElementById(
+            "mobileLanguageSelect"
+        );
+
+    if (mobileLanguageSelect) {
+        mobileLanguageSelect.value =
+            currentLanguage;
     }
 }
 
@@ -708,7 +667,8 @@ function applyLanguage() {
 
 function nav() {
 
-    const n = document.getElementById("nav");
+    const n =
+        document.getElementById("nav");
 
     if (!n) return;
 
@@ -717,10 +677,16 @@ function nav() {
 
         <header class="header">
 
-            <!-- LOGO -->
+            <!-- =========================================
+                 LOGO
+                 ========================================= -->
+
             <div class="brand">
 
-                <a href="dashboard.html" class="brand-link">
+                <a
+                    href="dashboard.html"
+                    class="brand-link"
+                >
 
                     <img
                         src="images/shopmanager-logo.png"
@@ -733,7 +699,11 @@ function nav() {
             </div>
 
 
-            <!-- Hamburger button - itaonekana kwenye simu tu -->
+            <!-- =========================================
+                 HAMBURGER BUTTON
+                 Inaonekana kwenye simu tu
+                 ========================================= -->
+
             <button
                 type="button"
                 class="menu-toggle"
@@ -745,8 +715,14 @@ function nav() {
             </button>
 
 
-            <!-- Navigation -->
-            <nav class="main-nav" id="mainNav">
+            <!-- =========================================
+                 NAVIGATION MENU
+                 ========================================= -->
+
+            <nav
+                class="main-nav"
+                id="mainNav"
+            >
 
                 <a href="dashboard.html">
                     ${t("dashboard")}
@@ -780,10 +756,48 @@ function nav() {
                     ${t("marketplace")}
                 </a>
 
+
+                <!-- =====================================
+                     MOBILE LANGUAGE SELECTOR
+
+                     Hii itaonekana ndani ya hamburger
+                     kwenye simu.
+                     ===================================== -->
+
+                <div class="mobile-language-box">
+
+                    <label
+                        for="mobileLanguageSelect"
+                    >
+                        ${t("language")}:
+                    </label>
+
+                    <select
+                        id="mobileLanguageSelect"
+                        onchange="changeLanguage(this.value)"
+                    >
+
+                        <option value="en">
+                            English
+                        </option>
+
+                        <option value="sw">
+                            Kiswahili
+                        </option>
+
+                    </select>
+
+                </div>
+
             </nav>
 
 
-            <!-- Language -->
+            <!-- =========================================
+                 DESKTOP LANGUAGE SELECTOR
+
+                 Hii itaonekana kwenye computer.
+                 ========================================= -->
+
             <div class="language-box">
 
                 <label for="languageSelect">
@@ -812,76 +826,123 @@ function nav() {
     `;
 
 
-    // Language select
+    // ========================================================
+    // DESKTOP LANGUAGE SELECTOR
+    // ========================================================
+
     const languageSelect =
-        document.getElementById("languageSelect");
+        document.getElementById(
+            "languageSelect"
+        );
 
     if (languageSelect) {
-        languageSelect.value = currentLanguage;
+
+        languageSelect.value =
+            currentLanguage;
     }
 
 
-    // Hamburger menu
+    // ========================================================
+    // MOBILE LANGUAGE SELECTOR
+    // ========================================================
+
+    const mobileLanguageSelect =
+        document.getElementById(
+            "mobileLanguageSelect"
+        );
+
+    if (mobileLanguageSelect) {
+
+        mobileLanguageSelect.value =
+            currentLanguage;
+    }
+
+
+    // ========================================================
+    // HAMBURGER MENU
+    // ========================================================
+
     const menuToggle =
-        document.getElementById("menuToggle");
+        document.getElementById(
+            "menuToggle"
+        );
 
     const mainNav =
-        document.getElementById("mainNav");
+        document.getElementById(
+            "mainNav"
+        );
 
 
     if (menuToggle && mainNav) {
+
+        // -----------------------------------------------
+        // Fungua / funga hamburger
+        // -----------------------------------------------
 
         menuToggle.addEventListener(
             "click",
             function () {
 
-                mainNav.classList.toggle("menu-open");
+                mainNav.classList.toggle(
+                    "menu-open"
+                );
 
 
                 const isOpen =
-                    mainNav.classList.contains("menu-open");
+                    mainNav.classList.contains(
+                        "menu-open"
+                    );
 
 
                 menuToggle.setAttribute(
                     "aria-expanded",
-                    isOpen ? "true" : "false"
+                    isOpen
+                        ? "true"
+                        : "false"
                 );
 
 
                 // Badilisha icon
                 menuToggle.textContent =
-                    isOpen ? "✕" : "☰";
-
+                    isOpen
+                        ? "✕"
+                        : "☰";
             }
         );
 
 
+        // -----------------------------------------------
         // Funga menu baada ya kuchagua page
-        mainNav.querySelectorAll("a").forEach(link => {
+        // -----------------------------------------------
 
-            link.addEventListener(
-                "click",
-                function () {
+        mainNav
+            .querySelectorAll("a")
+            .forEach(link => {
 
-                    mainNav.classList.remove(
-                        "menu-open"
-                    );
+                link.addEventListener(
+                    "click",
+                    function () {
 
-                    menuToggle.textContent = "☰";
+                        mainNav.classList.remove(
+                            "menu-open"
+                        );
 
-                    menuToggle.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
+                        menuToggle.textContent =
+                            "☰";
 
-                }
-            );
+                        menuToggle.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    }
+                );
 
-        });
+            });
 
     }
 
 }
+
 
 // ============================================================
 // 12. UPLOAD IMAGE
@@ -950,7 +1011,6 @@ async function uploadImage(file) {
             data.detail ||
             t("image_upload_failed")
         );
-
     }
 
 
@@ -959,7 +1019,10 @@ async function uploadImage(file) {
     return data.image_url;
 }
 
+
+// ============================================================
 // 13. START SHOPMANAGER
+// ============================================================
 
 // Tunajenga navigation.
 nav();
