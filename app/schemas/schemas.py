@@ -24,6 +24,11 @@ class UserOut(ORM):
     email: EmailStr
     role: str
     is_active: bool
+    profile_image_url: str | None = None
+
+
+class ProfileImageUpdate(BaseModel):
+    profile_image_url: str = Field(pattern=r"^/uploads/[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 class TokenOut(BaseModel):
@@ -185,3 +190,15 @@ class AdminStats(BaseModel):
     total_products: int
     total_sales: int
     total_advertisements: int
+
+
+class AdminUserOut(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    role: str
+    is_active: bool
+    created_at: datetime
+    business_name: str | None
+    products_count: int
+    sales_count: int

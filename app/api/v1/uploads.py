@@ -1,9 +1,10 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 from app.core.paths import UPLOAD_DIR
+from app.api.dependencies import get_current_user
 
 
 
@@ -14,7 +15,7 @@ router = APIRouter(
 
 
 @router.post("/image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), user=Depends(get_current_user)):
     """
     Kupokea picha kutoka kwenye computer ya seller
     na kuihifadhi kwenye backend/uploads.

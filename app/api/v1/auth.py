@@ -35,3 +35,11 @@ def login(d: LoginIn, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(u=Depends(get_current_user)):
     return u
+
+
+@router.put("/me/profile-image", response_model=UserOut)
+def update_profile_image(data: ProfileImageUpdate, u=Depends(get_current_user), db: Session = Depends(get_db)):
+    u.profile_image_url = data.profile_image_url
+    db.commit()
+    db.refresh(u)
+    return u

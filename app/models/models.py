@@ -13,7 +13,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), default="BUSINESS_OWNER")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    profile_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     business = relationship(
         "Business", back_populates="owner", uselist=False, cascade="all, delete-orphan"
     )
@@ -41,7 +42,7 @@ class Business(Base):
     category: Mapped[str | None] = mapped_column(String(80))
     description: Mapped[str | None] = mapped_column(Text)
     logo_url: Mapped[str | None] = mapped_column(String(500))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     owner = relationship("User", back_populates="business")
     products = relationship(
         "Product", back_populates="business", cascade="all, delete-orphan"
@@ -66,7 +67,7 @@ class Product(Base):
     image_url: Mapped[str | None] = mapped_column(String(500))
     sku: Mapped[str | None] = mapped_column(String(80))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     business = relationship("Business", back_populates="products")
     sale_items = relationship("SaleItem", back_populates="product")
 
@@ -83,7 +84,7 @@ class Sale(Base):
     total_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     total_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     profit: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     owner = relationship("User", back_populates="sales")
     items = relationship(
         "SaleItem", back_populates="sale", cascade="all, delete-orphan"
@@ -124,7 +125,7 @@ class Customer(Base):
     email: Mapped[str | None] = mapped_column(String(255))
     address: Mapped[str | None] = mapped_column(String(250))
     notes: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     owner = relationship("User", back_populates="customers")
 
 
@@ -142,7 +143,7 @@ class Advertisement(Base):
     price: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     image_url: Mapped[str | None] = mapped_column(String(500))
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     business = relationship("Business", back_populates="advertisements")
 
 
@@ -155,4 +156,4 @@ class StockMovement(Base):
     movement_type: Mapped[str] = mapped_column(String(30))
     quantity: Mapped[int] = mapped_column(Integer)
     note: Mapped[str | None] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
