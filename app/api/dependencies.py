@@ -13,5 +13,5 @@ def get_current_user(c:HTTPAuthorizationCredentials=Depends(bearer),db:Session=D
     if not u or not u.is_active: raise HTTPException(401,"User not found or inactive")
     return u
 def require_admin(user=Depends(get_current_user)):
-    if user.role!="ADMIN": raise HTTPException(403,"Admin access required")
+    if user.role!="admin": raise HTTPException(403,"Admin access required")
     return user
