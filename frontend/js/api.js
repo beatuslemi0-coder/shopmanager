@@ -1,4 +1,4 @@
-const API_DEFAULT_URL = " https://shopmanager-wwn6.onrender.com/api/v1";
+const API_DEFAULT_URL ="https://shopmanager-wwn6.onrender.com/api/v1";
 
 class ShopApi {
   constructor() {

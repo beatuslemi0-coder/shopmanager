@@ -184,7 +184,7 @@ function renderProfileAvatar() {
 
 function renderNav() {
   const items = [...sections];
-  if (store.user.role === "ADMIN") items.push(["admin", "Admin"]);
+  if (store.user.role === "admin") items.push(["admin", "Admin"]);
   $("nav").innerHTML = items.map(([id, label]) => `<button class="nav__item ${store.section === id ? "is-active" : ""}" type="button" data-nav="${id}"><span class="nav__mark"></span><span>${escapeHtml(label)}</span></button>`).join("");
 }
 
@@ -192,7 +192,7 @@ async function navigate(section) {
   store.section = section;
   store.editing = null;
   renderNav();
-  const title = [...sections, ["admin", "Admin"]].find(([id]) => id === section)?.[1] || "Shop Manager";
+  const title = [...sections, ["admin", "admin"]].find(([id]) => id === section)?.[1] || "Shop Manager";
   $("pageTitle").textContent = title;
   $("apiIndicator").textContent = "Loading";
   view.innerHTML = '<p class="loading-state">Loading…</p>';
@@ -367,13 +367,13 @@ async function renderBusiness() {
 }
 
 async function renderAdmin() {
-  if (store.user.role !== "ADMIN") throw new Error("Admin access required");
+  if (store.user.role !== "admin") throw new Error("admin access required");
   const [stats, users] = await Promise.all([api.adminStats(), api.adminUsers()]);
   store.adminUsers = users;
   view.innerHTML = `<section class="metrics-grid metrics-grid--reports">${Object.entries({ "Total users": stats.total_users, "Active users": stats.active_users, "Businesses": stats.total_businesses, "Products": stats.total_products, "Sales": stats.total_sales, "Advertisements": stats.total_advertisements }).map(([label, value]) => stat(label, value)).join("")}</section>
     ${tablePanel("User management", ["Name", "Email", "Business", "Role", "Account", "Joined", "Products", "Sales"], users.map((user) => [
       escapeHtml(user.full_name), escapeHtml(user.email), escapeHtml(user.business_name || "—"),
-      user.role === "ADMIN" ? "Admin" : "Business owner",
+      user.role === "admin" ? "admin" : "Business owner",
       user.is_active ? '<span class="status">Active</span>' : '<span class="status status--low">Inactive</span>',
       new Date(user.created_at).toLocaleDateString(store.language === "sw" ? "sw-TZ" : "en-TZ"),
       user.products_count, user.sales_count,
