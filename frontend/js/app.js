@@ -367,7 +367,7 @@ async function renderBusiness() {
 
 async function renderAdmin() {
   if (store.user.role !== "admin") throw new Error("admin access required");
-  const [stats, users] = await Promise.all([api.AdminStats(), api.adminUsers()]);
+  const [stats, users] = await Promise.all([api.adminStats(), api.adminUsers()]);
   store.adminUsers = users;
   view.innerHTML = `<section class="metrics-grid metrics-grid--reports">${Object.entries({ "Total users": stats.total_users, "Active users": stats.active_users, "Businesses": stats.total_businesses, "Products": stats.total_products, "Sales": stats.total_sales, "Advertisements": stats.total_advertisements }).map(([label, value]) => stat(label, value)).join("")}</section>
     ${tablePanel("User management", ["Name", "Email", "Business", "Role", "Account", "Joined", "Products", "Sales"], users.map((user) => [
