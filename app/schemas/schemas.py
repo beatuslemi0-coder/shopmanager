@@ -28,7 +28,7 @@ class UserOut(ORM):
 
 
 class ProfileImageUpdate(BaseModel):
-    profile_image_url: str = Field(pattern=r"^/uploads/[A-Za-z0-9][A-Za-z0-9._-]*$")
+    profile_image_url: str = Field(min_length=1)
 
 
 class TokenOut(BaseModel):
