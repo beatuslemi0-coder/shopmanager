@@ -1,11 +1,33 @@
+from pathlib import Path
+
+import cloudinary
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env", override=False)
+
+
 class Settings(BaseSettings):
     # Settings zote zinasomwa kutoka .env
-    DATABASE_URL:str
-    SECRET_KEY:str
-    ACCESS_TOKEN_EXPIRE_MINUTES:int=60
-    CORS_ORIGINS:str="http://localhost:5500,http://127.0.0.1:5500"
-    model_config=SettingsConfigDict(env_file=".env",extra="ignore")
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    CORS_ORIGINS: str = "http://localhost:5500,http://127.0.0.1:5500"
+
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        extra="ignore",
+        env_file_encoding="utf-8",
+    )
+
     @property
-    def cors_list(self): return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
-settings=Settings()
+    def cors_list(self):
+        return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
+
+
+settings = Settings()

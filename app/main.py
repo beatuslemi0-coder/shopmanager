@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 from app.core.paths import UPLOAD_DIR
 
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1.router import api_router
 import os
+import cloudinary
 
 
 
