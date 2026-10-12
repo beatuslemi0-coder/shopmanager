@@ -19,6 +19,9 @@ const swahili = {
   "Create your account": "Fungua akaunti yako",
   "Create account": "Fungua akaunti",
   "Manage your store operations.": "Simamia shughuli za duka lako.",
+  "Browse offers from local businesses.":
+    "Angalia matangazo ya biashara za karibu.",
+  "Browse public listings": "Angalia matangazo ya umma",
   "Create an account": "Fungua akaunti",
   "Start managing your business.": "Anza kusimamia biashara yako.",
   "Already have an account? Sign in": "Una akaunti tayari? Ingia",
@@ -313,8 +316,23 @@ function setBusy(button, busy, label = "Working...") {
 
 function showAuth() {
   $("app").hidden = true;
+  $("publicScreen").hidden = true;
   $("authScreen").hidden = false;
   renderAuthFields();
+}
+
+async function showPublicListings() {
+  $("app").hidden = true;
+  $("authScreen").hidden = true;
+  $("publicScreen").hidden = false;
+  const listings = $("publicListings");
+  listings.innerHTML = '<p class="loading-state">Loading…</p>';
+  try {
+    await renderPublicAds(listings);
+  } catch (error) {
+    listings.innerHTML = `<section class="empty-state"><h2>Could not load public listings</h2><p>${escapeHtml(error.message)}</p><button class="button button--secondary" id="publicRetry" type="button">Try again</button></section>`;
+  }
+  applyLanguage($("publicScreen"));
 }
 
 function renderAuthFields() {
@@ -776,9 +794,9 @@ async function renderAdvertisements() {
   )}`;
 }
 
-async function renderPublicAds() {
+async function renderPublicAds(target = view) {
   const ads = await api.publicAdvertisements();
-  view.innerHTML = `<section class="listing-grid">${ads.length ? ads.map((ad) => `<article class="listing"><div class="listing__image">${ad.image_url ? `<img src="${escapeHtml(imageUrl(ad.image_url))}" alt="">` : "<span>SHOP</span>"}</div><div class="listing__content"><p class="eyebrow">${escapeHtml(ad.business_name || "Store")}</p><h2>${escapeHtml(ad.title)}</h2><p>${escapeHtml(ad.description || "")}</p><div class="listing__meta"><strong>${ad.price == null ? "Contact store" : money(ad.price)}</strong><span>${escapeHtml(ad.location || "")}</span></div>${ad.phone ? `<a href="tel:${escapeHtml(ad.phone)}">${escapeHtml(ad.phone)}</a>` : ""}</div></article>`).join("") : '<p class="empty-inline">There are no published listings.</p>'}</section>`;
+  target.innerHTML = `<section class="listing-grid">${ads.length ? ads.map((ad) => `<article class="listing"><div class="listing__image">${ad.image_url ? `<img src="${escapeHtml(imageUrl(ad.image_url))}" alt="">` : "<span>SHOP</span>"}</div><div class="listing__content"><p class="eyebrow">${escapeHtml(ad.business_name || "Store")}</p><h2>${escapeHtml(ad.title)}</h2><p>${escapeHtml(ad.description || "")}</p><div class="listing__meta"><strong>${ad.price == null ? "Contact store" : money(ad.price)}</strong><span>${escapeHtml(ad.location || "")}</span></div>${ad.phone ? `<a href="tel:${escapeHtml(ad.phone)}">${escapeHtml(ad.phone)}</a>` : ""}</div></article>`).join("") : '<p class="empty-inline">There are no published listings.</p>'}</section>`;
 }
 
 function imageUrl(url) {
@@ -1091,6 +1109,11 @@ function setupAuth() {
     );
     $("authError").hidden = false;
   });
+  $("publicSignIn").addEventListener("click", showAuth);
+  $("authPublicListings").addEventListener("click", showPublicListings);
+  $("publicScreen").addEventListener("click", (event) => {
+    if (event.target.closest("#publicRetry")) showPublicListings();
+  });
 }
 
 function setupProfilePhoto() {
@@ -1170,7 +1193,7 @@ $("logoutBtn").addEventListener("click", () => {
   api.setToken("");
   store.user = null;
   store.business = null;
-  showAuth();
+  showPublicListings();
 });
 
 setupAuth();
@@ -1181,6 +1204,6 @@ setupProfilePhoto();
 if (api.token)
   enterWorkspace().catch(() => {
     api.setToken("");
-    showAuth();
+    showPublicListings();
   });
-else showAuth();
+else showPublicListings();

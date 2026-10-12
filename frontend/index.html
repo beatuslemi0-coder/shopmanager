@@ -7,6 +7,31 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
+    <section class="public-screen" id="publicScreen" hidden>
+      <header class="public-header">
+        <p class="eyebrow">SHOP MANAGER</p>
+        <div class="public-header__actions">
+          <label class="language-picker language-picker--compact"
+            ><span>Language</span
+            ><select class="language-select" aria-label="Language">
+              <option value="en">English</option>
+              <option value="sw">Kiswahili</option>
+            </select></label
+          >
+          <button class="button button--primary" id="publicSignIn" type="button">
+            Sign in
+          </button>
+        </div>
+      </header>
+      <main>
+        <div class="public-heading">
+          <h1>Public listings</h1>
+          <p>Browse offers from local businesses.</p>
+        </div>
+        <div id="publicListings" aria-live="polite"></div>
+      </main>
+    </section>
+
     <section class="auth-screen" id="authScreen">
       <form class="auth-panel" id="authForm">
         <p class="eyebrow">SHOP MANAGER</p>
@@ -33,6 +58,9 @@
         </button>
         <button class="text-button" id="forgotPassword" type="button">
           Forgot your password?
+        </button>
+        <button class="text-button" id="authPublicListings" type="button">
+          Browse public listings
         </button>
       </form>
     </section>

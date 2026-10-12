@@ -354,6 +354,19 @@ svg { width: 100%; height: 100%; fill: currentColor; display: block; }
   padding: 24px;
   background: radial-gradient(ellipse at 15% 15%, rgba(255,255,255,.72), transparent 38%), linear-gradient(145deg, #d6e7ea, #8eb6b6 58%, #537d7e);
 }
+.public-screen {
+  max-width: 1480px;
+  min-height: calc(100vh - 32px);
+  margin: 0 auto;
+  padding: 28px 36px 40px;
+  border: 1px solid rgba(31,58,74,.3);
+  background: var(--surface-alt);
+}
+.public-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.public-header__actions { display: flex; align-items: center; gap: 16px; }
+.public-heading { margin: 30px 0 22px; }
+.public-heading h1 { font-size: 26px; }
+.public-heading p { margin-top: 6px; color: var(--text-muted); font-size: 13px; }
 .auth-panel {
   width: min(100%, 460px);
   padding: 34px;
@@ -468,4 +481,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .sale-line .mini-button { grid-column: 1 / -1; justify-self: end; }
   .auth-screen { min-height: 100vh; padding: 16px; }
   .auth-panel { padding: 24px; }
+  .public-screen { min-height: 100vh; padding: 18px; }
+  .public-header { align-items: flex-start; flex-wrap: wrap; }
+  .public-header__actions { gap: 10px; }
 }
