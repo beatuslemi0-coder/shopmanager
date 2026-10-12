@@ -25,13 +25,19 @@ def create(
     b = db.query(Business).filter(Business.owner_id == u.id).first()
     if not b:
         raise HTTPException(400, "Create business profile first")
-    if (
-        d.product_id
-        and not db.query(Product)
-        .filter(Product.id == d.product_id, Product.business_id == b.id)
-        .first()
-    ):
-        raise HTTPException(404, "Product not found")
+
+    if d.product_id is not None:
+        product = (
+            db.query(Product)
+            .filter(Product.id == d.product_id, Product.business_id == b.id)
+            .first()
+        )
+        if not product:
+            raise HTTPException(
+                400,
+                "Selected product does not belong to your business or was not found",
+            )
+
     a = Advertisement(business_id=b.id, **d.model_dump())
     db.add(a)
     db.commit()
