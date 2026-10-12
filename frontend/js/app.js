@@ -333,11 +333,21 @@ function reportMetrics(report) {
 }
 
 async function renderAdvertisements() {
-  store.ads = await api.advertisements();
+  const [products, ads] = await Promise.all([api.products(), api.advertisements()]);
+  store.products = products;
+  store.ads = ads;
   const ad = store.editing?.type === "ad" ? store.editing.record : {};
-  const fields = [field("title", "Title", "text", ad.title || "", { required: true }), field("price", "Price", "number", ad.price || "", { min: 0, step: "0.01" }),
-    field("product_id", "Linked product ID", "number", ad.product_id || "", { min: 1 }), field("is_published", "Published", "checkbox", ad.is_published ?? true),
-    field("image_url", "Advertisement image", "image", ad.image_url || "", { wide: true }), field("description", "Description", "textarea", ad.description || "", { wide: true })];
+  const productOptions = store.products.length
+    ? store.products.map((item) => `<option value="${item.id}" ${String(ad.product_id) === String(item.id) ? "selected" : ""}>${escapeHtml(item.name)} (${item.stock_quantity} available)</option>`).join("")
+    : '<option value="">No products available</option>';
+  const fields = [
+    field("title", "Title", "text", ad.title || "", { required: true }),
+    field("price", "Price", "number", ad.price || "", { min: 0, step: "0.01" }),
+    `<label class="field"><span>Linked product ID</span><select name="product_id"><option value="">None</option>${productOptions}</select></label>`,
+    field("is_published", "Published", "checkbox", ad.is_published ?? true),
+    field("image_url", "Advertisement image", "image", ad.image_url || "", { wide: true }),
+    field("description", "Description", "textarea", ad.description || "", { wide: true }),
+  ];
   view.innerHTML = `${editor(store.editing ? "Edit advertisement" : "Create advertisement", fields, store.editing ? "Update advertisement" : "Publish advertisement")}${tablePanel("Your advertisements", ["Title", "Price", "Status", "Created"], store.ads.map((item) => [escapeHtml(item.title), item.price == null ? "—" : money(item.price), item.is_published ? "Published" : "Draft", new Date(item.created_at).toLocaleDateString()]), "No advertisements yet.", [
     (row, index) => actionButton("edit-ad", store.ads[index]?.id, "Edit"),
     (row, index) => actionButton("delete-ad", store.ads[index]?.id, "Delete", true),
@@ -394,10 +404,12 @@ function formObject(form) {
 function payloadFor(form) {
   const payload = formObject(form);
   for (const [key, value] of Object.entries(payload)) {
-    if (value === "") payload[key] = null;
+    if (value === "" || value === "None") payload[key] = null;
   }
-  for (const input of form.querySelectorAll('input[type="number"]')) {
-    if (input.name && payload[input.name] !== null) payload[input.name] = Number(payload[input.name]);
+  for (const input of form.querySelectorAll('input[type="number"], select[name="product_id"]')) {
+    if (!input.name) continue;
+    if (payload[input.name] === null || payload[input.name] === undefined || payload[input.name] === "") continue;
+    payload[input.name] = Number(payload[input.name]);
   }
   for (const input of form.querySelectorAll('input[type="checkbox"]')) payload[input.name] = input.checked;
   return payload;
