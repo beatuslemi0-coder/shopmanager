@@ -23,6 +23,9 @@ const swahili = {
   "Start managing your business.": "Anza kusimamia biashara yako.",
   "Already have an account? Sign in": "Una akaunti tayari? Ingia",
   "Check API connection": "Angalia muunganisho wa API",
+  "Forgot your password?": "Umesahau nenosiri lako?",
+  "Password reset is not available yet. Please contact the administrator.":
+    "Kubadilisha nenosiri bado hakupatikani. Tafadhali wasiliana na msimamizi.",
   "API URL": "Anwani ya API",
   "Full name": "Jina kamili",
   Email: "Barua pepe",
@@ -324,6 +327,7 @@ function renderAuthFields() {
   $("authSwitch").textContent = register
     ? "Already have an account? Sign in"
     : "Create an account";
+  $("forgotPassword").hidden = register;
   $("authFields").innerHTML =
     `${register ? '<label class="field field--wide"><span>Full name</span><input name="full_name" autocomplete="name" minlength="2" required></label>' : ""}
     <label class="field field--wide"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
@@ -1078,16 +1082,14 @@ function setupAuth() {
   });
   $("authSwitch").addEventListener("click", () => {
     store.authMode = store.authMode === "register" ? "login" : "register";
+    $("authError").hidden = true;
     renderAuthFields();
   });
-  $("healthCheck").addEventListener("click", async () => {
-    $("connectionState").textContent = "Checking…";
-    try {
-      await api.health();
-      $("connectionState").textContent = "API is reachable.";
-    } catch (error) {
-      $("connectionState").textContent = error.message;
-    }
+  $("forgotPassword").addEventListener("click", () => {
+    $("authError").textContent = translate(
+      "Password reset is not available yet. Please contact the administrator.",
+    );
+    $("authError").hidden = false;
   });
 }
 
