@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from app.models import PasswordResetToken
 from app.schemas.schemas import ResetPasswordIn
 from app.core.email_service import send_otp_email
+import logging
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -99,6 +100,7 @@ def forgot_password(
         send_otp_email(user.email, otp)
 
     except Exception:
+        logging.exception("Failed to send password reset email")
         # Futa OTP iliyotengenezwa ikiwa email imeshindwa kutumwa
         db.delete(reset_record)
         db.commit()
