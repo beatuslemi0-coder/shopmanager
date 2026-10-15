@@ -157,3 +157,43 @@ class StockMovement(Base):
     quantity: Mapped[int] = mapped_column(Integer)
     note: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+    
+    #ID for every request to change password
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    #ID fro user which need to change password
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    #Hash of OTP, not store real OTP
+    token_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+    )
+    
+    #Time for OTP to EXPIRE
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+    )
+    
+    #Time which OTP used; if None weight
+    used_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+    
+    #time which request created
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        nullable=False,
+    )

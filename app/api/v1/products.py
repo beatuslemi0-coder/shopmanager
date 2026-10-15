@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
@@ -41,6 +42,30 @@ def create(d: ProductIn, db: Session = Depends(get_db), u=Depends(get_current_us
     b = biz(db, u)
     if not b:
         raise HTTPException(400, "Create business profile first")
+    product_name = d.name.strip()
+    p = (
+        db.query(Product)
+        .filter(
+            Product.business_id == b.id,
+            Product.is_active == True,
+            func.lower(Product.name) == product_name.lower(),
+        )
+        .first()
+    )
+    if p:
+        p.stock_quantity += d.stock_quantity
+        if d.stock_quantity:
+            db.add(
+                StockMovement(
+                    product_id=p.id,
+                    movement_type="ADDITION",
+                    quantity=d.stock_quantity,
+                    note="Additional stock",
+                )
+            )
+        db.commit()
+        db.refresh(p)
+        return p
     p = Product(business_id=b.id, **d.model_dump())
     db.add(p)
     db.flush()

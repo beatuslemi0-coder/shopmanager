@@ -202,3 +202,18 @@ class AdminUserOut(BaseModel):
     business_name: str | None
     products_count: int
     sales_count: int
+
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+# Schema ya kuthibitisha OTP na kuweka password mpya
+class ResetPasswordIn(BaseModel):
+    email: EmailStr
+
+    # OTP lazima iwe na namba 6
+    otp: str = Field(pattern=r"^\d{6}$")
+
+    # Password mpya lazima iwe na angalau herufi/namba 8
+    new_password: str = Field(min_length=8, max_length=128)

@@ -15,25 +15,13 @@ router = APIRouter(
     tags=["Uploads"]
 )
 
-
-# ==========================================================
-# 1. KUUNGANISHA BACKEND NA CLOUDINARY
-# ==========================================================
-
-# Tunapata credentials kutoka settings za application.
-# Hizi zinasomwa kutoka .env ndani ya backend/.
-
 cloudinary.config(
     cloud_name=settings.CLOUDINARY_CLOUD_NAME,
     api_key=settings.CLOUDINARY_API_KEY,
     api_secret=settings.CLOUDINARY_API_SECRET,
     secure=True
 )
-
-
-# ==========================================================
 # 2. ENDPOINT YA KUPAKIA PICHA
-# ==========================================================
 
 @router.post("/image")
 async def upload_image(
@@ -92,8 +80,6 @@ async def upload_image(
         )
 
     try:
-        # Hatua ya nne: kutuma picha Cloudinary.
-        # UUID inasaidia kutoa jina la kipekee kwa picha.
 
         result = cloudinary.uploader.upload(
             image_data,
@@ -112,9 +98,6 @@ async def upload_image(
                 detail="Cloudinary did not return an image URL"
             )
 
-        # Hatua ya tano: kurudisha URL kwa frontend.
-        # Frontend inaweza kuhifadhi URL hii kwenye database
-        # kupitia API ya bidhaa, biashara au matangazo.
 
         return {
             "message": "Image uploaded successfully",
