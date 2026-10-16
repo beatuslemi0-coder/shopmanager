@@ -30,8 +30,11 @@ class Settings(BaseSettings):
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = "beatuslemi0@gmail.com"
-    SMTP_PASSWORD: str = "my_app_password"
+    SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "beatuslemi0@gmail.com"
+    # Resend: kutuma email kupitia API
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = ""
 
     @property
     def cors_list(self):
