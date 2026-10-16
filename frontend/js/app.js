@@ -10,6 +10,7 @@ const store = {
   section: "dashboard",
   editing: null,
   authMode: "login",
+  authEmail: "",
   language: localStorage.getItem("shopmanager_language") || "en",
 };
 
@@ -29,6 +30,26 @@ const swahili = {
   "Forgot your password?": "Umesahau nenosiri lako?",
   "Password reset is not available yet. Please contact the administrator.":
     "Kubadilisha nenosiri bado hakupatikani. Tafadhali wasiliana na msimamizi.",
+  "Reset password": "Badilisha nenosiri",
+  "Send reset code": "Tuma msimbo wa kubadilisha nenosiri",
+  "Enter your email address and we’ll send a reset code if the account exists.":
+    "Weka barua pepe yako na tutatuma msimbo ikiwa akaunti ipo.",
+  "Enter the 6-digit code sent to your email and choose a new password.":
+    "Weka msimbo wa tarakimu 6 uliotumwa kwenye barua pepe na uchague nenosiri jipya.",
+  "Reset code": "Msimbo wa kubadilisha nenosiri",
+  "New password": "Nenosiri jipya",
+  "Back to sign in": "Rudi kuingia",
+  "If the account exists, a reset code will be sent.":
+    "Ikiwa akaunti ipo, msimbo wa kubadilisha nenosiri utatumwa.",
+  "Password has been reset successfully. You can now log in.":
+    "Nenosiri limebadilishwa. Sasa unaweza kuingia.",
+  "Download report PDF": "Pakua ripoti (PDF)",
+  "Daily business report": "Ripoti ya biashara ya siku",
+  "Yesterday business report": "Ripoti ya biashara ya jana",
+  "Weekly business report": "Ripoti ya biashara ya wiki",
+  "Monthly business report": "Ripoti ya biashara ya mwezi",
+  "Yearly business report": "Ripoti ya biashara ya mwaka",
+  "Products sold": "Bidhaa zilizouzwa",
   "API URL": "Anwani ya API",
   "Full name": "Jina kamili",
   Email: "Barua pepe",
@@ -146,6 +167,10 @@ const swahili = {
   "Save profile": "Hifadhi wasifu",
   "Create business": "Tengeneza biashara",
   "Business name": "Jina la biashara",
+  "Business details": "Taarifa za biashara",
+  "Contact details": "Mawasiliano",
+  "Location details": "Mahali biashara ilipo",
+  Branding: "Utambulisho wa biashara",
   "Owner name": "Jina la mmiliki",
   Location: "Eneo",
   Logo: "Nembo",
@@ -263,6 +288,7 @@ function setupLanguage() {
 
 const sections = [
   ["dashboard", "Dashboard"],
+  ["business", "Business profile"],
   ["products", "Inventory"],
   ["sales", "Sales"],
   ["expenses", "Expenses"],
@@ -270,7 +296,6 @@ const sections = [
   ["reports", "Reports"],
   ["ads", "Advertisements"],
   ["public-ads", "Public listings"],
-  ["business", "Business profile"],
 ];
 
 function escapeHtml(value) {
@@ -310,6 +335,7 @@ function setBusy(button, busy, label = "Working...") {
     button.disabled = true;
   } else {
     button.textContent = button.dataset.label || button.textContent;
+    delete button.dataset.label;
     button.disabled = false;
   }
 }
@@ -337,19 +363,41 @@ async function showPublicListings() {
 
 function renderAuthFields() {
   const register = store.authMode === "register";
-  $("authTitle").textContent = register ? "Create your account" : "Sign in";
+  const forgot = store.authMode === "forgot";
+  const reset = store.authMode === "reset";
+  const emailField = `<label class="field field--wide"><span>Email</span><input name="email" type="email" autocomplete="email" value="${escapeHtml(store.authEmail)}" required></label>`;
+  $("authTitle").textContent = register
+    ? "Create your account"
+    : forgot || reset
+      ? "Reset password"
+      : "Sign in";
   $("authCopy").textContent = register
     ? "Start managing your business."
-    : "Manage your store operations.";
-  $("authSubmit").textContent = register ? "Create account" : "Sign in";
-  $("authSwitch").textContent = register
-    ? "Already have an account? Sign in"
-    : "Create an account";
-  $("forgotPassword").hidden = register;
-  $("authFields").innerHTML =
-    `${register ? '<label class="field field--wide"><span>Full name</span><input name="full_name" autocomplete="name" minlength="2" required></label>' : ""}
-    <label class="field field--wide"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
-    <label class="field field--wide"><span>Password</span><input name="password" type="password" autocomplete="${register ? "new-password" : "current-password"}" minlength="${register ? 6 : 1}" required></label>`;
+    : forgot
+      ? "Enter your email address and we’ll send a reset code if the account exists."
+      : reset
+        ? "Enter the 6-digit code sent to your email and choose a new password."
+        : "Manage your store operations.";
+  $("authSubmit").textContent = register
+    ? "Create account"
+    : forgot
+      ? "Send reset code"
+      : reset
+        ? "Reset password"
+        : "Sign in";
+  $("authSwitch").textContent = forgot || reset
+    ? "Back to sign in"
+    : register
+      ? "Already have an account? Sign in"
+      : "Create an account";
+  $("forgotPassword").hidden = register || forgot || reset;
+  $("authFields").innerHTML = register
+    ? `<label class="field field--wide"><span>Full name</span><input name="full_name" autocomplete="name" minlength="2" required></label>${emailField}<label class="field field--wide"><span>Password</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label>`
+    : forgot
+      ? emailField
+      : reset
+        ? `${emailField}<label class="field field--wide"><span>Reset code</span><input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></label><label class="field field--wide"><span>New password</span><input name="new_password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>`
+        : `${emailField}<label class="field field--wide"><span>Password</span><input name="password" type="password" autocomplete="current-password" minlength="1" required></label>`;
   applyLanguage($("authScreen"));
 }
 
@@ -533,9 +581,6 @@ async function renderProducts(search = "") {
       product.minimum_stock ?? 5,
       { required: true, min: 0 },
     ),
-    field("image_url", "Product image", "image", product.image_url || "", {
-      wide: true,
-    }),
     field("description", "Description", "textarea", product.description || "", {
       wide: true,
     }),
@@ -599,13 +644,13 @@ async function renderSales() {
         ["Bank Transfer", "Bank transfer"],
       ],
     })}
-    ${field("notes", "Notes", "text", "", { wide: true })}</div><div class="sale-lines" id="saleLines">${saleLine(productOptions)}</div>
+    </div><div class="sale-lines" id="saleLines">${saleLine(productOptions)}</div>
     <div class="form-actions"><button class="button button--secondary" type="button" data-action="add-sale-line">Add item</button><button class="button button--primary" type="submit">Complete sale</button></div></form>
     ${tablePanel("Sales history", ["Sale", "Date", "Payment", "Revenue", "Profit"], rows, "No sales recorded yet.")}`;
 }
 
 function saleLine(options) {
-  return `<div class="sale-line"><label class="field"><span>Product</span><select name="product_id" required>${options || '<option value="">No products available</option>'}</select></label><label class="field"><span>Quantity</span><input name="quantity" type="number" min="1" value="1" required></label><button class="mini-button mini-button--danger" type="button" data-action="remove-sale-line" aria-label="Remove item">Remove</button></div>`;
+  return `<div class="sale-line"><label class="field"><span>Product</span><select name="product_id" required>${options || '<option value="">No products available</option>'}</select></label><button class="mini-button mini-button--danger" type="button" data-action="remove-sale-line" aria-label="Remove item">Remove</button></div>`;
 }
 
 async function renderExpenses() {
@@ -637,7 +682,6 @@ async function renderExpenses() {
     field("description", "Description", "textarea", expense.description || "", {
       wide: true,
     }),
-    field("notes", "Notes", "text", expense.notes || "", { wide: true }),
   ];
   view.innerHTML = `${editor(store.editing ? "Edit expense" : "Add expense", fields, store.editing ? "Update expense" : "Add expense")}${tablePanel(
     "Expenses",
@@ -720,17 +764,98 @@ async function renderReports() {
     ["This month", monthly],
     ["This year", yearly],
   ];
-  view.innerHTML = `<section class="panel"><div class="panel-heading"><div><p class="eyebrow">REPORT SUMMARY</p><h2>${escapeHtml(today.date_from)} to ${escapeHtml(today.date_to)}</h2></div><label class="field field--compact"><span>Period</span><select id="reportPeriod">${options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label></div><div class="metrics-grid metrics-grid--reports" id="reportMetrics">${reportMetrics(today)}</div></section>
+  let selectedReport = today;
+  let selectedPeriod = "today";
+  view.innerHTML = `<section class="panel"><div class="panel-heading"><div><p class="eyebrow">REPORT SUMMARY</p><h2 id="reportDateRange">${escapeHtml(today.date_from)} to ${escapeHtml(today.date_to)}</h2></div><div class="topbar__actions"><button class="button button--secondary" id="downloadReport" type="button">${escapeHtml(translate("Download report PDF"))}</button><label class="field field--compact"><span>Period</span><select id="reportPeriod">${options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label></div></div><div class="metrics-grid metrics-grid--reports" id="reportMetrics">${reportMetrics(today)}</div></section>
     <section class="panel"><div class="panel-heading"><h2>Period comparisons</h2></div><div class="summary-grid">${periods.map(([label, item]) => stat(label, money(item.net_profit), `${item.sales_count} sales · ${money(item.revenue)} revenue`)).join("")}</div></section>`;
+  $("downloadReport").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    setBusy(button, true);
+    try {
+      await downloadReportPdf(selectedReport, selectedPeriod);
+    } catch (error) {
+      toast(error.message, true);
+    } finally {
+      setBusy(button, false);
+    }
+  });
   $("reportPeriod").addEventListener("change", async (event) => {
     try {
-      $("reportMetrics").innerHTML = reportMetrics(
-        await api.report(event.target.value),
-      );
+      selectedReport = await api.report(event.target.value);
+      selectedPeriod = event.target.value;
+      $("reportMetrics").innerHTML = reportMetrics(selectedReport);
+      $("reportDateRange").textContent = `${selectedReport.date_from} to ${selectedReport.date_to}`;
     } catch (error) {
+      event.target.value = selectedPeriod;
       toast(error.message, true);
     }
   });
+}
+
+async function downloadReportPdf(report, period) {
+  let JsPDF = window.jspdf?.jsPDF;
+  if (!JsPDF) {
+    JsPDF = await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "js/vendor/jspdf.umd.min.js";
+      script.onload = () => {
+        if (window.jspdf?.jsPDF) resolve(window.jspdf.jsPDF);
+        else reject(new Error("The local PDF generator could not be initialized."));
+      };
+      script.onerror = () => {
+        script.remove();
+        reject(new Error("Could not load the local PDF generator. Refresh the page and try again."));
+      };
+      document.head.append(script);
+    });
+  }
+
+  const pdf = new JsPDF({ unit: "mm", format: "a4" });
+  pdf.setFillColor(25, 87, 78);
+  pdf.rect(0, 0, 210, 38, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(18);
+  pdf.text("Shop Manager", 16, 17);
+  pdf.setFontSize(12);
+  const titles = {
+    today: "Daily business report",
+    yesterday: "Yesterday business report",
+    week: "Weekly business report",
+    month: "Monthly business report",
+    year: "Yearly business report",
+  };
+  pdf.text(translate(titles[period]), 16, 28);
+
+  const date = report.date_from === report.date_to
+    ? report.date_from
+    : `${report.date_from} - ${report.date_to}`;
+  const rows = [
+    ["Revenue", money(report.revenue)],
+    ["Cost of goods", money(report.cost_of_goods)],
+    ["Gross profit", money(report.gross_profit)],
+    ["Expenses", money(report.expenses)],
+    ["Net profit", money(report.net_profit)],
+    ["Profit margin", `${Number(report.profit_margin).toFixed(1)}%`],
+    ["Sales", String(report.sales_count)],
+    ["Products sold", String(report.products_sold)],
+  ];
+
+  pdf.setTextColor(40, 52, 54);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
+  pdf.text(`${translate("Date")}: ${date}`, 16, 51);
+  let y = 63;
+  rows.forEach(([label, value], index) => {
+    if (index % 2 === 0) {
+      pdf.setFillColor(240, 245, 243);
+      pdf.rect(16, y - 6, 178, 11, "F");
+    }
+    pdf.text(translate(label), 20, y + 1);
+    pdf.text(value, 190, y + 1, { align: "right" });
+    y += 12;
+  });
+  pdf.save(`${period}-report-${report.date_from}.pdf`);
 }
 
 function reportMetrics(report) {
@@ -809,18 +934,11 @@ async function renderBusiness() {
   store.business = await api.business();
   const business = store.business || {};
   const fields = [
+    '<div class="form-section-title"><h3>Business details</h3></div>',
     field("name", "Business name", "text", business.name || "", {
       required: true,
     }),
-    field("owner_name", "Owner name", "text", business.owner_name || "", {
-      required: true,
-    }),
-    field("phone", "Phone", "tel", business.phone || ""),
-    field("email", "Email", "email", business.email || ""),
     field("category", "Category", "text", business.category || ""),
-    field("location", "Location", "text", business.location || ""),
-    field("address", "Address", "text", business.address || "", { wide: true }),
-    field("logo_url", "Logo", "image", business.logo_url || "", { wide: true }),
     field(
       "description",
       "Description",
@@ -828,6 +946,17 @@ async function renderBusiness() {
       business.description || "",
       { wide: true },
     ),
+    '<div class="form-section-title"><h3>Contact details</h3></div>',
+    field("owner_name", "Owner name", "text", business.owner_name || "", {
+      required: true,
+    }),
+    field("phone", "Phone", "tel", business.phone || ""),
+    field("email", "Email", "email", business.email || ""),
+    '<div class="form-section-title"><h3>Location details</h3></div>',
+    field("location", "Location", "text", business.location || ""),
+    field("address", "Address", "text", business.address || "", { wide: true }),
+    '<div class="form-section-title"><h3>Branding</h3></div>',
+    field("logo_url", "Logo", "image", business.logo_url || "", { wide: true }),
   ];
   view.innerHTML = `${editor(business.id ? "Business profile" : "Set up your business", fields, business.id ? "Save profile" : "Create business")}`;
 }
@@ -973,7 +1102,7 @@ async function handleFormSubmit(event) {
       const customerId = data.customer_id ? Number(data.customer_id) : null;
       const items = [...form.querySelectorAll(".sale-line")].map((line) => ({
         product_id: Number(line.querySelector('[name="product_id"]').value),
-        quantity: Number(line.querySelector('[name="quantity"]').value),
+        quantity: 1,
       }));
       await api.createSale({
         customer_id: customerId,
@@ -1081,14 +1210,35 @@ function setupAuth() {
   $("authForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     $("authError").hidden = true;
+    $("authError").classList.remove("auth-error--success");
     const button = $("authSubmit");
     setBusy(button, true);
     try {
       const values = Object.fromEntries(new FormData(event.currentTarget));
-      const result =
-        store.authMode === "register"
-          ? await api.register(values)
-          : await api.login(values);
+      store.authEmail = values.email || store.authEmail;
+      if (store.authMode === "forgot") {
+        const result = await api.forgotPassword({ email: values.email });
+        setBusy(button, false);
+        store.authMode = "reset";
+        renderAuthFields();
+        $("authError").textContent = translate(result.message);
+        $("authError").classList.add("auth-error--success");
+        $("authError").hidden = false;
+        return;
+      }
+      if (store.authMode === "reset") {
+        const result = await api.resetPassword(values);
+        setBusy(button, false);
+        store.authMode = "login";
+        renderAuthFields();
+        $("authError").textContent = translate(result.message);
+        $("authError").classList.add("auth-error--success");
+        $("authError").hidden = false;
+        return;
+      }
+      const result = store.authMode === "register"
+        ? await api.register(values)
+        : await api.login(values);
       api.setToken(result.access_token);
       await enterWorkspace();
     } catch (error) {
@@ -1099,15 +1249,16 @@ function setupAuth() {
     }
   });
   $("authSwitch").addEventListener("click", () => {
-    store.authMode = store.authMode === "register" ? "login" : "register";
+    store.authMode = store.authMode === "login" ? "register" : "login";
     $("authError").hidden = true;
     renderAuthFields();
   });
   $("forgotPassword").addEventListener("click", () => {
-    $("authError").textContent = translate(
-      "Password reset is not available yet. Please contact the administrator.",
-    );
-    $("authError").hidden = false;
+    const email = $("authFields").querySelector('[name="email"]');
+    store.authEmail = email?.value || "";
+    store.authMode = "forgot";
+    $("authError").hidden = true;
+    renderAuthFields();
   });
   $("publicSignIn").addEventListener("click", showAuth);
   $("authPublicListings").addEventListener("click", showPublicListings);

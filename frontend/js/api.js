@@ -72,6 +72,12 @@ class ShopApi {
   register(data) {
     return this.post("/auth/register", data, { auth: false });
   }
+  forgotPassword(data) {
+    return this.post("/auth/forgot-password", data, { auth: false });
+  }
+  resetPassword(data) {
+    return this.post("/auth/reset-password", data, { auth: false });
+  }
   me() {
     return this.get("/auth/me");
   }

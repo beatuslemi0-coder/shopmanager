@@ -379,6 +379,7 @@ svg { width: 100%; height: 100%; fill: currentColor; display: block; }
 .auth-panel > .field { margin-top: 12px; }
 .auth-panel .button { margin-top: 20px; }
 .auth-error { padding: 10px 12px; margin-top: 14px; color: #8c3025; background: #fbe3d9; border-left: 3px solid #c8643a; font-size: 13px; }
+.auth-error--success { color: #245f46; background: #e3f2e9; border-left-color: #39845f; }
 .connection-state { min-height: 18px; color: var(--text-muted); font-size: 12px; text-align: center; }
 .text-button { display: block; margin: 12px auto 0; color: var(--accent); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 .app { max-width: 1480px; border: 1px solid rgba(31,58,74,.3); border-radius: 8px; }
@@ -400,6 +401,9 @@ svg { width: 100%; height: 100%; fill: currentColor; display: block; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .summary-grid .metric { background: var(--surface-alt); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.form-section-title { grid-column: 1 / -1; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+.form-section-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.form-section-title h3 { color: var(--text); font-size: 13px; }
 .field { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: var(--text-muted); font-size: 11px; font-weight: 700; }
 .field--wide { grid-column: 1 / -1; }
 .field--compact { min-width: 135px; }
