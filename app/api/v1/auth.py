@@ -138,7 +138,7 @@ def reset_password(
         PasswordResetToken.user_id == user.id,
         PasswordResetToken.token_hash == otp_hash,
         PasswordResetToken.used_at.is_(None),
-        PasswordResetToken.expires_at > datetime.utcnow(),
+        PasswordResetToken.expires_at > datetime.now(),
     ).with_for_update().first()
 
     if not reset_record:

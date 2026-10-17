@@ -32,9 +32,11 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = "beatuslemi0@gmail.com"
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "beatuslemi0@gmail.com"
-    # Resend: kutuma email kupitia API
-    RESEND_API_KEY: str = ""
-    RESEND_FROM_EMAIL: str = ""
+    # MailerSend API token
+    API_TOKEN: str = ""
+
+    # Anwani ya mtumaji wa email
+    MAILERSEND_FROM_EMAIL: str = ""
 
     @property
     def cors_list(self):
