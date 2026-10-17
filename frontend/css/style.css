@@ -438,7 +438,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .status--low { color: #b04a32; }
 .inline-search input { width: 210px; }
 .sale-lines { display: grid; gap: 10px; margin-top: 14px; }
-.sale-line { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; align-items: end; gap: 10px; padding: 10px; background: var(--surface-alt); border: 1px solid var(--border); }
+.sale-line { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 10px; padding: 10px; background: var(--surface-alt); border: 1px solid var(--border); }
 .admin-form { align-items: end; }
 .listing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .listing { overflow: hidden; border: 1px solid var(--border); background: var(--surface); }
@@ -481,8 +481,8 @@ tbody tr:last-child td { border-bottom: 0; }
   .field--wide { grid-column: auto; }
   .panel-heading { align-items: flex-start; }
   .inline-search input { width: 145px; }
-  .sale-line { grid-template-columns: minmax(0, 1fr) 84px; }
-  .sale-line .mini-button { grid-column: 1 / -1; justify-self: end; }
+  .sale-line { grid-template-columns: minmax(0, 1fr); }
+  .sale-line .mini-button { justify-self: end; }
   .auth-screen { min-height: 100vh; padding: 16px; }
   .auth-panel { padding: 24px; }
   .public-screen { min-height: 100vh; padding: 18px; }

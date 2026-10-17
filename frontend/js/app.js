@@ -111,6 +111,9 @@ const swahili = {
   "No products yet.": "Bado hakuna bidhaa.",
   "Search products": "Tafuta bidhaa",
   "Search products...": "Tafuta bidhaa...",
+  "Search SKU": "Tafuta SKU",
+  "Select product": "Chagua bidhaa",
+  "No products match this SKU": "Hakuna bidhaa inayolingana na SKU hii",
   Edit: "Hariri",
   Delete: "Futa",
   "Record sale": "Rekodi mauzo",
@@ -621,12 +624,6 @@ async function renderSales() {
     api.customers(),
   ]);
   store.products = products;
-  const productOptions = products
-    .map(
-      (item) =>
-        `<option value="${item.id}">${escapeHtml(item.name)} (${item.stock_quantity} available, ${money(item.selling_price)})</option>`,
-    )
-    .join("");
   const rows = sales.map((sale) => [
     `#${sale.id}`,
     new Date(sale.created_at).toLocaleString(),
@@ -644,13 +641,28 @@ async function renderSales() {
         ["Bank Transfer", "Bank transfer"],
       ],
     })}
-    </div><div class="sale-lines" id="saleLines">${saleLine(productOptions)}</div>
+    </div><div class="sale-lines" id="saleLines">${saleLine(products)}</div>
     <div class="form-actions"><button class="button button--secondary" type="button" data-action="add-sale-line">Add item</button><button class="button button--primary" type="submit">Complete sale</button></div></form>
     ${tablePanel("Sales history", ["Sale", "Date", "Payment", "Revenue", "Profit"], rows, "No sales recorded yet.")}`;
 }
 
-function saleLine(options) {
-  return `<div class="sale-line"><label class="field"><span>Product</span><select name="product_id" required>${options || '<option value="">No products available</option>'}</select></label><button class="mini-button mini-button--danger" type="button" data-action="remove-sale-line" aria-label="Remove item">Remove</button></div>`;
+function saleProductOptions(products, noMatch = false) {
+  const placeholder = noMatch
+    ? "No products match this SKU"
+    : products.length
+      ? "Select product"
+      : "No products available";
+  return `<option value="">${translate(placeholder)}</option>${products
+    .map(
+      (item) =>
+        `<option value="${item.id}">${escapeHtml(item.name)}${item.sku ? ` · SKU ${escapeHtml(item.sku)}` : ""} (${item.stock_quantity} available, ${money(item.selling_price)})</option>`,
+    )
+    .join("")}`;
+}
+
+function saleLine(products) {
+  const searchLabel = translate("Search SKU");
+  return `<div class="sale-line"><label class="field"><span>${searchLabel}</span><input name="sku_search" type="search" placeholder="${searchLabel}" autocomplete="off"></label><label class="field"><span>${translate("Product")}</span><select name="product_id" required>${saleProductOptions(products)}</select></label><button class="mini-button mini-button--danger" type="button" data-action="remove-sale-line" aria-label="Remove item">Remove</button></div>`;
 }
 
 async function renderExpenses() {
@@ -1161,13 +1173,7 @@ async function handleViewClick(event) {
       return navigate(store.section);
     }
     if (action === "add-sale-line") {
-      const options = store.products
-        .map(
-          (item) =>
-            `<option value="${item.id}">${escapeHtml(item.name)} (${item.stock_quantity} available, ${money(item.selling_price)})</option>`,
-        )
-        .join("");
-      $("saleLines").insertAdjacentHTML("beforeend", saleLine(options));
+      $("saleLines").insertAdjacentHTML("beforeend", saleLine(store.products));
       return;
     }
     if (action === "remove-sale-line") {
@@ -1330,6 +1336,33 @@ $("nav").addEventListener("click", handleViewClick);
 view.addEventListener("click", handleViewClick);
 view.addEventListener("submit", handleFormSubmit);
 view.addEventListener("input", (event) => {
+  const skuSearch = event.target.closest('.sale-line [name="sku_search"]');
+  if (skuSearch) {
+    const line = skuSearch.closest(".sale-line");
+    const select = line.querySelector('[name="product_id"]');
+    const currentProductId = select.value;
+    const query = skuSearch.value.trim().toLocaleLowerCase();
+    const matches = store.products.filter((product) =>
+      String(product.sku || "")
+        .toLocaleLowerCase()
+        .includes(query),
+    );
+    const exactMatches = matches.filter(
+      (product) =>
+        String(product.sku || "").trim().toLocaleLowerCase() === query &&
+        query,
+    );
+    const exactProductId =
+      exactMatches.length === 1 ? String(exactMatches[0].id) : "";
+    const retainedProductId = matches.some(
+      (product) => String(product.id) === currentProductId,
+    )
+      ? currentProductId
+      : "";
+    select.innerHTML = saleProductOptions(matches, Boolean(query) && !matches.length);
+    select.value = exactProductId || retainedProductId;
+    return;
+  }
   if (event.target.id !== "productSearch") return;
   clearTimeout(view.searchTimer);
   view.searchTimer = setTimeout(
@@ -1339,6 +1372,15 @@ view.addEventListener("input", (event) => {
       ),
     220,
   );
+});
+view.addEventListener("change", (event) => {
+  if (!event.target.matches('.sale-line [name="product_id"]')) return;
+  const product = store.products.find(
+    (item) => String(item.id) === event.target.value,
+  );
+  event.target
+    .closest(".sale-line")
+    .querySelector('[name="sku_search"]').value = product?.sku || "";
 });
 $("logoutBtn").addEventListener("click", () => {
   api.setToken("");
