@@ -159,20 +159,27 @@ class ShopApi {
   dashboard() {
     return this.get("/reports/dashboard");
   }
-  advertisements() {
-    return this.get("/advertisements");
+  monthlyTrend(month) {
+    return this.get(`/reports/monthly-trend?month=${encodeURIComponent(month)}`);
   }
-  createAdvertisement(data) {
-    return this.post("/advertisements", data);
+  subscriptionPlans() {
+    return this.get("/subscriptions/plans", { auth: false });
   }
-  updateAdvertisement(id, data) {
-    return this.put(`/advertisements/${id}`, data);
+  submitSubscriptionPayment(data) {
+    const params = new URLSearchParams({
+      plan_id: String(data.plan_id),
+      phone_number: data.phone_number,
+      transaction_reference: data.transaction_reference,
+    });
+    return this.request(`/subscriptions/payments?${params}`, {
+      method: "POST",
+    });
   }
-  deleteAdvertisement(id) {
-    return this.delete(`/advertisements/${id}`);
+  mySubscriptionPayments() {
+    return this.get("/subscriptions/my-payments");
   }
-  publicAdvertisements() {
-    return this.get("/advertisements/public", { auth: false });
+  mySubscription() {
+    return this.get("/subscriptions/my-subscription");
   }
   uploadImage(file) {
     const form = new FormData();
@@ -185,14 +192,17 @@ class ShopApi {
   adminUsers() {
     return this.get("/admin/users");
   }
+  pendingSubscriptionPayments() {
+    return this.get("/admin/payments/pending");
+  }
+  approveSubscriptionPayment(id) {
+    return this.post(`/admin/payments/${id}/approve`, {});
+  }
   deactivateUser(id) {
     return this.post(`/admin/users/${id}/deactivate`, {});
   }
   activateUser(id) {
     return this.post(`/admin/users/${id}/activate`, {});
-  }
-  removeAdvertisement(id) {
-    return this.delete(`/admin/advertisements/${id}`);
   }
   async health() {
     const origin = this.baseUrl.replace(/\/api\/v1\/?$/, "");

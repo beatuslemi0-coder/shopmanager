@@ -6,7 +6,6 @@ const store = {
   products: [],
   customers: [],
   expenses: [],
-  ads: [],
   section: "dashboard",
   editing: null,
   authMode: "login",
@@ -20,9 +19,24 @@ const swahili = {
   "Create your account": "Fungua akaunti yako",
   "Create account": "Fungua akaunti",
   "Manage your store operations.": "Simamia shughuli za duka lako.",
-  "Browse offers from local businesses.":
-    "Angalia matangazo ya biashara za karibu.",
-  "Browse public listings": "Angalia matangazo ya umma",
+  "Welcome back": "Karibu tena",
+  "Let's get you started": "Tuanze pamoja",
+  "Account assistance": "Msaada wa akaunti",
+  "Enter your details to continue to your business.":
+    "Weka taarifa zako ili kuendelea na biashara yako.",
+  "Join Shop Manager and grow your business.":
+    "Jiunge na Shop Manager na uikuze biashara yako.",
+  "Need help accessing your account?":
+    "Unahitaji msaada kufikia akaunti yako?",
+  "Your business, in focus": "Biashara yako, kwa uwazi",
+  "Make every day a brighter business day.":
+    "Fanya kila siku iwe siku bora zaidi ya biashara.",
+  "Simple tools to keep your shop moving forward.":
+    "Zana rahisi za kusaidia duka lako kusonga mbele.",
+  "Dark mode": "Mwonekano wa giza",
+  "Light mode": "Mwonekano wa mwanga",
+  "Switch to light mode": "Badili kwenda mwonekano wa mwanga",
+  "Switch to dark mode": "Badili kwenda mwonekano wa giza",
   "Create an account": "Fungua akaunti",
   "Start managing your business.": "Anza kusimamia biashara yako.",
   "Already have an account? Sign in": "Una akaunti tayari? Ingia",
@@ -60,9 +74,33 @@ const swahili = {
   Expenses: "Matumizi",
   Customers: "Wateja",
   Reports: "Ripoti",
-  Advertisements: "Matangazo",
-  "Public listings": "Matangazo ya umma",
   "Business profile": "Wasifu wa biashara",
+  Subscription: "Kifurushi",
+  "Current subscription": "Kifurushi cha sasa",
+  "No active subscription.": "Huna kifurushi hai kwa sasa.",
+  "Free trial is active.": "Kipindi cha majaribio bila malipo kinaendelea.",
+  "Free trial": "Jaribio bila malipo",
+  "Days remaining": "Siku zilizobaki",
+  "Trial expires": "Jaribio linaisha",
+  "Your free trial has expired. An active subscription is required to continue.":
+    "Muda wa majaribio bila malipo umeisha. Unahitaji kifurushi hai ili kuendelea.",
+  "View subscription plans": "Angalia vifurushi vya subscription",
+  "Available plans": "Vifurushi vinavyopatikana",
+  "Submit payment details": "Wasilisha taarifa za malipo",
+  "Choose a plan": "Chagua kifurushi",
+  "Phone number": "Namba ya simu",
+  "M-Pesa transaction reference": "Namba ya muamala wa M-Pesa",
+  "Submit payment": "Wasilisha malipo",
+  "Payment history": "Historia ya malipo",
+  "No subscription payments yet.": "Bado hujawasilisha malipo ya kifurushi.",
+  "No plans available": "Hakuna vifurushi vinavyopatikana",
+  "Duration (days)": "Muda (siku)",
+  Starts: "Ilianza",
+  Expires: "Inaisha",
+  PENDING: "INASUBIRI",
+  APPROVED: "IMEIDHINISHWA",
+  REJECTED: "IMEKATALIWA",
+  ACTIVE: "HAI",
   Admin: "Msimamizi",
   "Sign out": "Toka",
   Connected: "Imeunganishwa",
@@ -85,6 +123,16 @@ const swahili = {
   "Cost of goods": "Gharama ya bidhaa",
   "Gross profit": "Faida ghafi",
   "Recent sales": "Mauzo ya hivi karibuni",
+  "Monthly business trend": "Mwenendo wa biashara kwa mwezi",
+  "Choose month": "Chagua mwezi",
+  "Daily financial overview": "Muhtasari wa fedha kwa siku",
+  "Number of sales per day": "Idadi ya mauzo kwa siku",
+  "Each bar shows one day. Hover over a bar to see its date and value.":
+    "Kila pau inaonyesha siku moja. Elekeza kipanya kwenye pau kuona tarehe na kiasi.",
+  "No activity for this month.": "Hakuna shughuli za biashara mwezi huu.",
+  "Each month shows revenue, expenses and net profit. Hover over a bar for details.":
+    "Kila mwezi unaonyesha mapato, matumizi na faida halisi. Elekeza kipanya kwenye pau kuona maelezo.",
+  "No monthly business data yet.": "Bado hakuna takwimu za biashara za mwezi.",
   Sale: "Muamala",
   Date: "Tarehe",
   Payment: "Malipo",
@@ -151,21 +199,6 @@ const swahili = {
   "This month": "Mwezi huu",
   "This year": "Mwaka huu",
   "Period comparisons": "Ulinganisho wa vipindi",
-  "Create advertisement": "Tengeneza tangazo",
-  "Edit advertisement": "Hariri tangazo",
-  "Update advertisement": "Sasisha tangazo",
-  "Publish advertisement": "Chapisha tangazo",
-  Title: "Kichwa",
-  "Linked product ID": "Namba ya bidhaa iliyounganishwa",
-  Published: "Imechapishwa",
-  "Advertisement image": "Picha ya tangazo",
-  "Your advertisements": "Matangazo yako",
-  Created: "Imetengenezwa",
-  Draft: "Rasimu",
-  "No advertisements yet.": "Bado hakuna matangazo.",
-  "Contact store": "Wasiliana na duka",
-  Store: "Duka",
-  "There are no published listings.": "Hakuna matangazo yaliyochapishwa.",
   "Set up your business": "Sanidi biashara yako",
   "Save profile": "Hifadhi wasifu",
   "Create business": "Tengeneza biashara",
@@ -182,19 +215,15 @@ const swahili = {
   Businesses: "Biashara",
   "Total products": "Jumla ya bidhaa",
   "Total sales": "Jumla ya mauzo",
-  "Total advertisements": "Jumla ya matangazo",
   "Account controls": "Udhibiti wa akaunti",
   "User ID": "Namba ya mtumiaji",
   "Deactivate user": "Zima mtumiaji",
-  "Remove advertisement": "Ondoa tangazo",
-  "Advertisement ID": "Namba ya tangazo",
   Cancel: "Ghairi",
   Save: "Hifadhi",
   "Changes saved.": "Mabadiliko yamehifadhiwa.",
   "Sale recorded and stock updated.":
     "Mauzo yamerekodiwa na stoku imesasishwa.",
   "User deactivated.": "Mtumiaji amezimwa.",
-  "Advertisement removed.": "Tangazo limeondolewa.",
   "Item deleted.": "Kipengee kimefutwa.",
   "Delete this item? This cannot be undone.":
     "Futa kipengee hiki? Hatua hii haiwezi kutenduliwa.",
@@ -223,6 +252,16 @@ const swahili = {
   Activate: "Washa",
   "Current account": "Akaunti ya sasa",
   "No users are registered.": "Hakuna watumiaji waliosajiliwa.",
+  "Pending subscription payments": "Malipo ya vifurushi yanayosubiri",
+  "No pending subscription payments.": "Hakuna malipo ya vifurushi yanayosubiri.",
+  "Plan": "Kifurushi",
+  "Transaction reference": "Namba ya muamala",
+  "Submitted": "Yamewasilishwa",
+  "Approve": "Idhinisha",
+  "Approve this payment and activate the subscription?":
+    "Idhinisha malipo haya na uwashe kifurushi?",
+  "Payment approved and subscription activated.":
+    "Malipo yameidhinishwa na kifurushi kimewashwa.",
   "Account status updated.": "Hali ya akaunti imesasishwa.",
   "Deactivate this account? The user will no longer be able to sign in.":
     "Sitisha akaunti hii? Mtumiaji hataweza tena kuingia.",
@@ -297,8 +336,7 @@ const sections = [
   ["expenses", "Expenses"],
   ["customers", "Customers"],
   ["reports", "Reports"],
-  ["ads", "Advertisements"],
-  ["public-ads", "Public listings"],
+  ["subscription", "Subscription"],
 ];
 
 function escapeHtml(value) {
@@ -345,23 +383,8 @@ function setBusy(button, busy, label = "Working...") {
 
 function showAuth() {
   $("app").hidden = true;
-  $("publicScreen").hidden = true;
   $("authScreen").hidden = false;
   renderAuthFields();
-}
-
-async function showPublicListings() {
-  $("app").hidden = true;
-  $("authScreen").hidden = true;
-  $("publicScreen").hidden = false;
-  const listings = $("publicListings");
-  listings.innerHTML = '<p class="loading-state">Loading…</p>';
-  try {
-    await renderPublicAds(listings);
-  } catch (error) {
-    listings.innerHTML = `<section class="empty-state"><h2>Could not load public listings</h2><p>${escapeHtml(error.message)}</p><button class="button button--secondary" id="publicRetry" type="button">Try again</button></section>`;
-  }
-  applyLanguage($("publicScreen"));
 }
 
 function renderAuthFields() {
@@ -374,13 +397,18 @@ function renderAuthFields() {
     : forgot || reset
       ? "Reset password"
       : "Sign in";
+  $("authGreeting").textContent = register
+    ? "Let's get you started"
+    : forgot || reset
+      ? "Account assistance"
+      : "Welcome back";
   $("authCopy").textContent = register
-    ? "Start managing your business."
+    ? "Join Shop Manager and grow your business."
     : forgot
-      ? "Enter your email address and we’ll send a reset code if the account exists."
+      ? "Need help accessing your account?"
       : reset
-        ? "Enter the 6-digit code sent to your email and choose a new password."
-        : "Manage your store operations.";
+      ? "Enter the 6-digit code sent to your email and choose a new password."
+      : "Enter your details to continue to your business.";
   $("authSubmit").textContent = register
     ? "Create account"
     : forgot
@@ -456,14 +484,16 @@ async function navigate(section) {
     else if (section === "expenses") await renderExpenses();
     else if (section === "customers") await renderCustomers();
     else if (section === "reports") await renderReports();
-    else if (section === "ads") await renderAdvertisements();
-    else if (section === "public-ads") await renderPublicAds();
+    else if (section === "subscription") await renderSubscription();
     else if (section === "business") await renderBusiness();
     else if (section === "admin") await renderAdmin();
     $("apiIndicator").textContent = "Connected";
   } catch (error) {
     $("apiIndicator").textContent = "API error";
-    view.innerHTML = `<section class="empty-state"><h2>Could not load ${escapeHtml(title.toLowerCase())}</h2><p>${escapeHtml(error.message)}</p><button class="button button--secondary" data-action="reload">Try again</button></section>`;
+    const subscriptionRequired = error.message.includes(
+      "active subscription is required",
+    );
+    view.innerHTML = `<section class="empty-state"><h2>Could not load ${escapeHtml(title.toLowerCase())}</h2><p>${escapeHtml(error.message)}</p>${subscriptionRequired ? '<button class="button button--primary" data-nav="subscription">View subscription plans</button>' : '<button class="button button--secondary" data-action="reload">Try again</button>'}</section>`;
   }
   applyLanguage(document.body);
 }
@@ -473,8 +503,13 @@ function stat(label, value, detail = "") {
 }
 
 async function renderDashboard() {
-  const data = await api.dashboard();
-  const recentSales = await api.sales();
+  const currentMonth = new Date();
+  const selectedMonth = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`;
+  const [data, recentSales, monthlyTrend] = await Promise.all([
+    api.dashboard(),
+    api.sales(),
+    api.monthlyTrend(selectedMonth),
+  ]);
   const today = [
     ["Revenue today", money(data.revenue), `${data.sales_count} sales`],
     [
@@ -509,7 +544,115 @@ async function renderDashboard() {
           money(sale.profit),
         ]),
       "No sales recorded yet.",
-    )}`;
+    )}
+    ${monthlyActivityChart(monthlyTrend, selectedMonth)}`;
+}
+
+function dailyActivityChart(days, series, formatValue) {
+  const width = Math.max(900, days.length * 30 + 80);
+  const height = 300;
+  const margin = { top: 22, right: 18, bottom: 48, left: 86 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const values = days.flatMap((day) =>
+    series.map(({ key }) => Number(day[key]) || 0),
+  );
+  const minimum = Math.min(0, ...values);
+  const maximum = Math.max(0, ...values);
+  const padding = maximum === minimum ? 1 : (maximum - minimum) * 0.1;
+  const minValue = minimum - padding;
+  const maxValue = maximum + padding;
+  const y = (value) =>
+    margin.top + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
+  const zeroY = y(0);
+  const groupWidth = plotWidth / Math.max(days.length, 1);
+  const barGap = series.length > 1 ? 2 : 0;
+  const barWidth = Math.max(
+    3,
+    Math.min(
+      16,
+      (groupWidth * 0.76 - barGap * (series.length - 1)) / series.length,
+    ),
+  );
+  const locale = store.language === "sw" ? "sw-TZ" : "en-TZ";
+  const grid = Array.from({ length: 5 }, (_, index) => {
+    const value = maxValue - ((maxValue - minValue) * index) / 4;
+    const position = y(value);
+    return `<g class="trend-gridline"><line x1="${margin.left}" y1="${position}" x2="${width - margin.right}" y2="${position}"></line><text x="${margin.left - 10}" y="${position + 4}" text-anchor="end">${escapeHtml(formatValue(value))}</text></g>`;
+  }).join("");
+  const dateLabels = days
+    .map((day, index) => {
+      const date = new Date(`${day.date}T00:00:00`);
+      const label = new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date);
+      return `<text class="trend-month" x="${margin.left + groupWidth * (index + 0.5)}" y="${height - 18}" text-anchor="middle">${escapeHtml(label)}</text>`;
+    })
+    .join("");
+  const bars = days
+    .map((day, dayIndex) => {
+      const groupStart =
+        margin.left +
+        groupWidth * (dayIndex + 0.5) -
+        (barWidth * series.length + barGap * (series.length - 1)) / 2;
+      return series
+        .map(({ key, label, color }, seriesIndex) => {
+          const value = Number(day[key]) || 0;
+          const valueY = y(value);
+          const barY = Math.min(zeroY, valueY);
+          const barHeight = Math.max(Math.abs(zeroY - valueY), 1);
+          const barX = groupStart + seriesIndex * (barWidth + barGap);
+          const displayValue =
+            key === "sales_count" ? String(value) : money(value);
+          const dateLabel = new Intl.DateTimeFormat(locale, {
+            dateStyle: "medium",
+          }).format(new Date(`${day.date}T00:00:00`));
+          return `<rect class="trend-bar" x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="2" fill="${color}"><title>${escapeHtml(dateLabel)}: ${escapeHtml(translate(label))} ${escapeHtml(displayValue)}</title></rect>`;
+        })
+        .join("");
+    })
+    .join("");
+  return `<div class="trend-chart-wrap"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(series.map(({ label }) => translate(label)).join(", "))}">${grid}<line class="trend-zero-line" x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}"></line>${bars}${dateLabels}</svg></div>`;
+}
+
+function monthlyActivityChart(days, month) {
+  const financialSeries = [
+    { key: "revenue", label: "Revenue", color: "#287a67" },
+    { key: "expenses", label: "Expenses", color: "#d58a36" },
+    { key: "net_profit", label: "Net profit", color: "#5176c2" },
+  ];
+  const salesSeries = [
+    { key: "sales_count", label: "Sales", color: "#b34f78" },
+  ];
+  const locale = store.language === "sw" ? "sw-TZ" : "en-TZ";
+  const monthLabel = new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${month}-01T00:00:00`));
+  const today = new Date();
+  const maxMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const legend = (series) =>
+    series
+      .map(
+        ({ label, color }) =>
+          `<span class="trend-legend-item" style="--series-color:${color}"><i></i>${escapeHtml(translate(label))}</span>`,
+      )
+      .join("");
+  const hasActivity = days.some(
+    (day) =>
+      Number(day.revenue) ||
+      Number(day.expenses) ||
+      Number(day.net_profit) ||
+      Number(day.sales_count),
+  );
+  const emptyMessage = hasActivity
+    ? ""
+    : `<p class="empty-inline">${escapeHtml(translate("No activity for this month."))}</p>`;
+  const moneyAxis = (value) =>
+    `TSh ${new Intl.NumberFormat(locale, {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value)}`;
+
+  return `<section class="panel" id="monthlyActivity"><div class="panel-heading"><div><h2>${escapeHtml(translate("Monthly business trend"))}</h2><p class="trend-help">${escapeHtml(monthLabel)} · ${escapeHtml(translate("Each bar shows one day. Hover over a bar to see its date and value."))}</p></div><label class="field field--compact trend-month-picker"><span>${escapeHtml(translate("Choose month"))}</span><input id="dashboardMonth" type="month" value="${escapeHtml(month)}" max="${maxMonth}"></label></div><div id="monthlyTrendCharts">${emptyMessage || `<h3 class="trend-section-title">${escapeHtml(translate("Daily financial overview"))}</h3><div class="trend-legend">${legend(financialSeries)}</div>${dailyActivityChart(days, financialSeries, moneyAxis)}<h3 class="trend-section-title">${escapeHtml(translate("Number of sales per day"))}</h3><div class="trend-legend">${legend(salesSeries)}</div>${dailyActivityChart(days, salesSeries, (value) => new Intl.NumberFormat(locale).format(value))}`}</div></section>`;
 }
 
 function tablePanel(title, headers, rows, emptyText, actions = [], tools = "") {
@@ -885,55 +1028,45 @@ function reportMetrics(report) {
     .join("");
 }
 
-async function renderAdvertisements() {
-  const [products, ads] = await Promise.all([
-    api.products(),
-    api.advertisements(),
+async function renderSubscription() {
+  const [plans, subscription, payments] = await Promise.all([
+    api.subscriptionPlans(),
+    api.mySubscription(),
+    api.mySubscriptionPayments(),
   ]);
-  store.products = products;
-  store.ads = ads;
-  const ad = store.editing?.type === "ad" ? store.editing.record : {};
-  const productOptions = store.products.length
-    ? store.products
+  const planOptions = plans.length
+    ? plans
         .map(
-          (item) =>
-            `<option value="${item.id}" ${String(ad.product_id) === String(item.id) ? "selected" : ""}>${escapeHtml(item.name)} (${item.stock_quantity} available)</option>`,
+          (plan) =>
+            `<option value="${plan.id}">${escapeHtml(plan.name)} — ${money(plan.price)} / ${plan.duration_days} ${escapeHtml(translate("Duration (days)").toLowerCase())}</option>`,
         )
         .join("")
-    : '<option value="">No products available</option>';
-  const fields = [
-    field("title", "Title", "text", ad.title || "", { required: true }),
-    field("price", "Price", "number", ad.price || "", { min: 0, step: "0.01" }),
-    `<label class="field"><span>Linked product ID</span><select name="product_id"><option value="">None</option>${productOptions}</select></label>`,
-    field("is_published", "Published", "checkbox", ad.is_published ?? true),
-    field("image_url", "Advertisement image", "image", ad.image_url || "", {
-      wide: true,
-    }),
-    field("description", "Description", "textarea", ad.description || "", {
-      wide: true,
-    }),
-  ];
-  view.innerHTML = `${editor(store.editing ? "Edit advertisement" : "Create advertisement", fields, store.editing ? "Update advertisement" : "Publish advertisement")}${tablePanel(
-    "Your advertisements",
-    ["Title", "Price", "Status", "Created"],
-    store.ads.map((item) => [
-      escapeHtml(item.title),
-      item.price == null ? "—" : money(item.price),
-      item.is_published ? "Published" : "Draft",
-      new Date(item.created_at).toLocaleDateString(),
-    ]),
-    "No advertisements yet.",
-    [
-      (row, index) => actionButton("edit-ad", store.ads[index]?.id, "Edit"),
-      (row, index) =>
-        actionButton("delete-ad", store.ads[index]?.id, "Delete", true),
-    ],
-  )}`;
-}
+    : `<option value="">${escapeHtml(translate("No plans available"))}</option>`;
+  const dateLocale = store.language === "sw" ? "sw-TZ" : "en-TZ";
+  const activeSubscription = subscription.active
+    ? `<p><strong>${escapeHtml(subscription.plan)}</strong> · <span class="status">${escapeHtml(subscription.status)}</span></p><p>${escapeHtml(translate("Starts"))}: ${new Date(subscription.starts_at).toLocaleDateString(dateLocale)} · ${escapeHtml(translate("Expires"))}: ${new Date(subscription.expires_at).toLocaleDateString(dateLocale)}</p>`
+    : subscription.trial_active
+      ? `<p><strong>${escapeHtml(translate("Free trial"))}</strong> · <span class="status">${escapeHtml(translate("Active"))}</span></p><p>${escapeHtml(translate("Days remaining"))}: ${Math.max(1, Math.ceil((new Date(subscription.trial_expires_at) - Date.now()) / 86400000))} · ${escapeHtml(translate("Trial expires"))}: ${new Date(subscription.trial_expires_at).toLocaleDateString(dateLocale)}</p>`
+      : `<p>${escapeHtml(subscription.message || translate("No active subscription."))}</p>`;
 
-async function renderPublicAds(target = view) {
-  const ads = await api.publicAdvertisements();
-  target.innerHTML = `<section class="listing-grid">${ads.length ? ads.map((ad) => `<article class="listing"><div class="listing__image">${ad.image_url ? `<img src="${escapeHtml(imageUrl(ad.image_url))}" alt="">` : "<span>SHOP</span>"}</div><div class="listing__content"><p class="eyebrow">${escapeHtml(ad.business_name || "Store")}</p><h2>${escapeHtml(ad.title)}</h2><p>${escapeHtml(ad.description || "")}</p><div class="listing__meta"><strong>${ad.price == null ? "Contact store" : money(ad.price)}</strong><span>${escapeHtml(ad.location || "")}</span></div>${ad.phone ? `<a href="tel:${escapeHtml(ad.phone)}">${escapeHtml(ad.phone)}</a>` : ""}</div></article>`).join("") : '<p class="empty-inline">There are no published listings.</p>'}</section>`;
+  view.innerHTML = `<section class="panel"><div class="panel-heading"><h2>Current subscription</h2></div>${activeSubscription}</section>
+    <section class="panel"><div class="panel-heading"><h2>Available plans</h2></div>${plans.length ? `<div class="summary-grid">${plans.map((plan) => stat(plan.name, money(plan.price), `${plan.duration_days} ${translate("Duration (days)").toLowerCase()}`)).join("")}</div>` : `<p class="empty-inline">${escapeHtml(translate("No plans available"))}</p>`}</section>
+    <section class="panel"><div class="panel-heading"><h2>Submit payment details</h2></div><form class="form-grid" data-form="subscription-payment"><label class="field"><span>Choose a plan</span><select name="plan_id" required ${plans.length ? "" : "disabled"}>${planOptions}</select></label>${field("phone_number", "Phone number", "tel", "", { required: true, placeholder: "+255..." })}${field("transaction_reference", "M-Pesa transaction reference", "text", "", { required: true })}<div class="form-actions"><button class="button button--primary" type="submit" ${plans.length ? "" : "disabled"}>Submit payment</button></div></form></section>
+    ${tablePanel(
+      "Payment history",
+      ["Plan", "Amount", "Phone number", "Transaction reference", "Status", "Date"],
+      payments.map((payment) => [
+        escapeHtml(payment.plan),
+        money(payment.amount),
+        escapeHtml(payment.phone_number),
+        escapeHtml(payment.transaction_reference),
+        escapeHtml(payment.status),
+        new Date(payment.created_at).toLocaleDateString(
+          store.language === "sw" ? "sw-TZ" : "en-TZ",
+        ),
+      ]),
+      "No subscription payments yet.",
+    )}`;
 }
 
 function imageUrl(url) {
@@ -975,9 +1108,10 @@ async function renderBusiness() {
 
 async function renderAdmin() {
   if (store.user.role !== "admin") throw new Error("admin access required");
-  const [stats, users] = await Promise.all([
+  const [stats, users, pendingPayments] = await Promise.all([
     api.adminStats(),
     api.adminUsers(),
+    api.pendingSubscriptionPayments(),
   ]);
   store.adminUsers = users;
   view.innerHTML = `<section class="metrics-grid metrics-grid--reports">${Object.entries(
@@ -987,12 +1121,41 @@ async function renderAdmin() {
       Businesses: stats.total_businesses,
       Products: stats.total_products,
       Sales: stats.total_sales,
-      Advertisements: stats.total_advertisements,
     },
   )
     .map(([label, value]) => stat(label, value))
     .join("")}</section>
     ${tablePanel(
+    "Pending subscription payments",
+    [
+      "User ID",
+      "Plan",
+      "Amount",
+      "Phone number",
+      "Transaction reference",
+      "Submitted",
+    ],
+    pendingPayments.map((payment) => [
+      `#${payment.user_id}`,
+      escapeHtml(payment.plan_name),
+      money(payment.amount),
+      escapeHtml(payment.phone_number),
+      escapeHtml(payment.transaction_reference),
+      new Date(payment.created_at).toLocaleDateString(
+        store.language === "sw" ? "sw-TZ" : "en-TZ",
+      ),
+    ]),
+    "No pending subscription payments.",
+    [
+      (row, index) =>
+        actionButton(
+          "approve-payment",
+          pendingPayments[index]?.id,
+          "Approve",
+        ),
+    ],
+  )}
+  ${tablePanel(
       "User management",
       [
         "Name",
@@ -1031,8 +1194,7 @@ async function renderAdmin() {
           return `<button class="mini-button ${user.is_active ? "mini-button--danger" : ""}" type="button" data-action="toggle-user" data-id="${user.id}" ${isCurrentUser ? "disabled" : ""}>${label}</button>`;
         },
       ],
-    )}
-    <section class="panel"><div class="panel-heading"><h2>Remove advertisement</h2></div><form class="form-grid admin-form" data-form="remove-ad"><label class="field"><span>Advertisement ID</span><input name="ad_id" type="number" min="1" required></label><div class="form-actions"><button class="button button--danger" type="submit">Remove advertisement</button></div></form></section>`;
+    )}`;
 }
 
 function formObject(form) {
@@ -1096,10 +1258,6 @@ async function handleFormSubmit(event) {
       } else if (store.section === "expenses") {
         if (store.editing) await api.updateExpense(store.editing.id, payload);
         else await api.createExpense(payload);
-      } else if (store.section === "ads") {
-        if (store.editing)
-          await api.updateAdvertisement(store.editing.id, payload);
-        else await api.createAdvertisement(payload);
       } else if (store.section === "business") {
         store.business = await api.saveBusiness(
           payload,
@@ -1124,14 +1282,19 @@ async function handleFormSubmit(event) {
       });
       toast("Sale recorded and stock updated.");
       await navigate("sales");
+    } else if (type === "subscription-payment") {
+      const data = formObject(form);
+      const result = await api.submitSubscriptionPayment({
+        plan_id: Number(data.plan_id),
+        phone_number: data.phone_number.trim(),
+        transaction_reference: data.transaction_reference.trim(),
+      });
+      toast(result.message || "Payment submitted.");
+      await navigate("subscription");
     } else if (type === "deactivate") {
       await api.deactivateUser(Number(new FormData(form).get("user_id")));
       toast("User deactivated.");
       form.reset();
-    } else if (type === "remove-ad") {
-      await api.removeAdvertisement(Number(new FormData(form).get("ad_id")));
-      toast("Advertisement removed.");
-      await navigate("admin");
     }
   } catch (error) {
     toast(error.message, true);
@@ -1150,6 +1313,23 @@ async function handleViewClick(event) {
   if (!button) return;
   const { action, id } = button.dataset;
   try {
+    if (action === "approve-payment") {
+      if (
+        !confirm(
+          translate(
+            "Approve this payment and activate the subscription?",
+          ),
+        )
+      )
+        return;
+      const result = await api.approveSubscriptionPayment(id);
+      toast(
+        result.message === "Payment approved and subscription activated"
+          ? "Payment approved and subscription activated."
+          : result.message,
+      );
+      return navigate("admin");
+    }
     if (action === "toggle-user") {
       const user = store.adminUsers.find((item) => item.id === Number(id));
       if (!user) return;
@@ -1185,7 +1365,6 @@ async function handleViewClick(event) {
       "edit-product": store.products,
       "edit-customer": store.customers,
       "edit-expense": store.expenses,
-      "edit-ad": store.ads,
     }[action];
     if (collection) {
       const type = action.replace("edit-", "");
@@ -1200,7 +1379,6 @@ async function handleViewClick(event) {
       "delete-product": () => api.deleteProduct(id),
       "delete-customer": () => api.deleteCustomer(id),
       "delete-expense": () => api.deleteExpense(id),
-      "delete-ad": () => api.deleteAdvertisement(id),
     }[action];
     if (remove && confirm("Delete this item? This cannot be undone.")) {
       await remove();
@@ -1266,11 +1444,6 @@ function setupAuth() {
     $("authError").hidden = true;
     renderAuthFields();
   });
-  $("publicSignIn").addEventListener("click", showAuth);
-  $("authPublicListings").addEventListener("click", showPublicListings);
-  $("publicScreen").addEventListener("click", (event) => {
-    if (event.target.closest("#publicRetry")) showPublicListings();
-  });
 }
 
 function setupProfilePhoto() {
@@ -1305,6 +1478,39 @@ function setupTheme() {
         : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+  });
+}
+
+function setupAuthTheme() {
+  const screen = $("authScreen");
+  const toggle = $("authThemeToggle");
+  const legacyPreference = localStorage.getItem("shopmanager_auth_lamp");
+  const savedTheme =
+    localStorage.getItem("shopmanager_auth_theme") ||
+    (legacyPreference === "off"
+      ? "light"
+      : legacyPreference === "on"
+        ? "dark"
+        : "dark");
+  screen.dataset.authTheme = savedTheme;
+
+  const updateToggle = () => {
+    const lightMode = screen.dataset.authTheme === "light";
+    toggle.setAttribute("aria-pressed", String(lightMode));
+    toggle.setAttribute(
+      "aria-label",
+      translate(lightMode ? "Switch to dark mode" : "Switch to light mode"),
+    );
+    $("authThemeLabel").textContent = lightMode ? "Light mode" : "Dark mode";
+    applyLanguage(screen);
+  };
+
+  updateToggle();
+  toggle.addEventListener("click", () => {
+    screen.dataset.authTheme =
+      screen.dataset.authTheme === "light" ? "dark" : "light";
+    localStorage.setItem("shopmanager_auth_theme", screen.dataset.authTheme);
+    updateToggle();
   });
 }
 
@@ -1374,6 +1580,23 @@ view.addEventListener("input", (event) => {
   );
 });
 view.addEventListener("change", (event) => {
+  if (event.target.id === "dashboardMonth") {
+    const month = event.target.value;
+    const charts = $("monthlyTrendCharts");
+    if (!month || !charts) return;
+    charts.innerHTML = `<p class="loading-state">${escapeHtml(translate("Loading…"))}</p>`;
+    api
+      .monthlyTrend(month)
+      .then((days) => {
+        const activity = $("monthlyActivity");
+        if (activity) activity.outerHTML = monthlyActivityChart(days, month);
+      })
+      .catch((error) => {
+        charts.innerHTML = `<p class="empty-inline">${escapeHtml(error.message)}</p>`;
+        toast(error.message, true);
+      });
+    return;
+  }
   if (!event.target.matches('.sale-line [name="product_id"]')) return;
   const product = store.products.find(
     (item) => String(item.id) === event.target.value,
@@ -1386,17 +1609,18 @@ $("logoutBtn").addEventListener("click", () => {
   api.setToken("");
   store.user = null;
   store.business = null;
-  showPublicListings();
+  showAuth();
 });
 
 setupAuth();
 setupTheme();
+setupAuthTheme();
 setupMobileMenu();
 setupLanguage();
 setupProfilePhoto();
 if (api.token)
   enterWorkspace().catch(() => {
     api.setToken("");
-    showPublicListings();
+    showAuth();
   });
-else showPublicListings();
+else showAuth();
