@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import require_active_subscription
 from app.models import (
     Business,
     Product,
@@ -26,7 +26,7 @@ router = APIRouter(
 def create_sale(
     data: SaleIn,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_active_subscription),
 ):
     """
     Kurekodi sale moja au sale yenye bidhaa nyingi.
@@ -218,7 +218,7 @@ def create_sale(
 )
 def get_sales(
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_active_subscription),
 ):
     """
     Kupata sales za user aliyeingia tu.

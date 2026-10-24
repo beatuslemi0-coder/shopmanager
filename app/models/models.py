@@ -15,6 +15,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     profile_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    trial_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     business = relationship(
         "Business", back_populates="owner", uselist=False, cascade="all, delete-orphan"
     )
@@ -197,3 +198,141 @@ class PasswordResetToken(Base):
         default=datetime.now,
         nullable=False,
     )
+    
+# MODEL 1: VIFURUSHI VYA MALIPO
+
+class SubscriptionPlan(Base):
+    __tablename__ = "subscription_plans"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Jina la kifurushi, mfano Weekly, Monthly au Yearly
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+
+    # Bei ya kifurushi kwa shilingi za Tanzania
+    price: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+
+    # Muda wa kifurushi kwa siku
+    duration_days: Mapped[int] = mapped_column(Integer)
+
+    # Kuonyesha kama kifurushi kinapatikana
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Tarehe kifurushi kilipoundwa
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now
+    )
+
+
+# MODEL 2: SUBSCRIPTION ZA WAFANYABIASHARA
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Mfanyabiashara anayemiliki subscription
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True
+    )
+
+    # Kifurushi alichochagua
+    plan_id: Mapped[int] = mapped_column(
+        ForeignKey("subscription_plans.id")
+    )
+
+    # Tarehe subscription inapoanza
+    starts_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
+    # Tarehe subscription inapoisha
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        index=True
+    )
+
+    # PENDING, ACTIVE, EXPIRED au CANCELLED
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="PENDING",
+        index=True
+    )
+
+    # Tarehe rekodi ilipoundwa
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now
+    )
+
+    # Mahusiano na mtumiaji pamoja na kifurushi
+    user = relationship("User")
+    plan = relationship("SubscriptionPlan")
+
+# MODEL 3: MALIPO YA M-PESA
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Mtumiaji aliyewasilisha malipo
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True
+    )
+
+    # Kifurushi kinacholipiwa
+    plan_id: Mapped[int] = mapped_column(
+        ForeignKey("subscription_plans.id")
+    )
+
+    # Kiasi kilichotangazwa kwa malipo haya
+    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+
+    # Namba ya simu iliyotumika kulipa
+    phone_number: Mapped[str] = mapped_column(String(40))
+
+    # Namba ya muamala wa M-Pesa iliyowasilishwa
+    transaction_reference: Mapped[str] = mapped_column(
+        String(100),
+        unique=True,
+        index=True
+    )
+
+    # PENDING, APPROVED au REJECTED
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="PENDING",
+        index=True
+    )
+
+    # Admin aliyekagua malipo; huwa tupu kabla ya uhakiki
+    reviewed_by: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    # Tarehe ya uhakiki wa admin
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
+    # Maelezo ya admin kuhusu uamuzi wa malipo
+    admin_note: Mapped[str | None] = mapped_column(Text)
+
+    # Tarehe malipo yalipowasilishwa
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now
+    )
+
+    # Mahusiano na mtumiaji na kifurushi
+    user = relationship("User", foreign_keys=[user_id])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+    plan = relationship("SubscriptionPlan")

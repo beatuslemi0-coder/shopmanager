@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import TRIAL_DAYS, get_current_user
 from app.core.security import hash_password, verify_password, create_access_token
 from app.models import User
 from app.schemas.schemas import *
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models import PasswordResetToken
 from app.schemas.schemas import ResetPasswordIn
 from app.core.email_service import send_otp_email
@@ -21,8 +21,12 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 def register(d: RegisterIn, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == d.email).first():
         raise HTTPException(400, "Email already registered")
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     u = User(
-        full_name=d.full_name, email=d.email, password_hash=hash_password(d.password)
+        full_name=d.full_name,
+        email=d.email,
+        password_hash=hash_password(d.password),
+        trial_expires_at=now + timedelta(days=TRIAL_DAYS),
     )
     db.add(u)
     db.commit()

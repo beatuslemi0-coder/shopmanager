@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import require_active_subscription
 from app.models import Business, Product, StockMovement
 from app.schemas.schemas import ProductIn, ProductOut
 
@@ -17,7 +17,7 @@ def biz(db, u):
 def all(
     search: str | None = None,
     db: Session = Depends(get_db),
-    u=Depends(get_current_user),
+    u=Depends(require_active_subscription),
 ):
     b = biz(db, u)
     if not b:
@@ -29,7 +29,7 @@ def all(
 
 
 @router.get("/{id}", response_model=ProductOut)
-def one(id: int, db: Session = Depends(get_db), u=Depends(get_current_user)):
+def one(id: int, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     b = biz(db, u)
     p = db.query(Product).filter(Product.id == id, Product.business_id == b.id).first()
     if not p:
@@ -38,7 +38,7 @@ def one(id: int, db: Session = Depends(get_db), u=Depends(get_current_user)):
 
 
 @router.post("", response_model=ProductOut)
-def create(d: ProductIn, db: Session = Depends(get_db), u=Depends(get_current_user)):
+def create(d: ProductIn, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     b = biz(db, u)
     if not b:
         raise HTTPException(400, "Create business profile first")
@@ -85,7 +85,7 @@ def create(d: ProductIn, db: Session = Depends(get_db), u=Depends(get_current_us
 
 @router.put("/{id}", response_model=ProductOut)
 def update(
-    id: int, d: ProductIn, db: Session = Depends(get_db), u=Depends(get_current_user)
+    id: int, d: ProductIn, db: Session = Depends(get_db), u=Depends(require_active_subscription)
 ):
     b = biz(db, u)
     p = db.query(Product).filter(Product.id == id, Product.business_id == b.id).first()
@@ -109,7 +109,7 @@ def update(
 
 
 @router.delete("/{id}")
-def delete(id: int, db: Session = Depends(get_db), u=Depends(get_current_user)):
+def delete(id: int, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     b = biz(db, u)
     p = db.query(Product).filter(Product.id == id, Product.business_id == b.id).first()
     if not p:

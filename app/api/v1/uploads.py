@@ -5,7 +5,7 @@ import cloudinary.uploader
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import require_active_subscription
 from app.core.config import settings
 
 
@@ -26,7 +26,7 @@ cloudinary.config(
 @router.post("/image")
 async def upload_image(
     file: UploadFile = File(...),
-    user=Depends(get_current_user)
+    user=Depends(require_active_subscription)
 ):
     """
     Endpoint hii inapokea picha kutoka frontend,

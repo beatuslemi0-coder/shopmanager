@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from app.api.v1.subscriptions import router as subscriptions_router
+
 from app.api.v1 import (
     auth,
     businesses,
@@ -7,7 +9,6 @@ from app.api.v1 import (
     expenses,
     customers,
     reports,
-    advertisements,
     admin,
     uploads,
 )
@@ -21,8 +22,9 @@ for r in [
     expenses.router,
     customers.router,
     reports.router,
-    advertisements.router,
     admin.router,
     uploads.router,
 ]:
     api_router.include_router(r)
+    
+    api_router.include_router(subscriptions_router)

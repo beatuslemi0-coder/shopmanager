@@ -3,8 +3,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.dependencies import require_admin
-from app.models import User, Business, Product, Sale, Advertisement
+from app.models import User, Business, Product, Sale
 from app.schemas.schemas import AdminStats, AdminUserOut
+from datetime import datetime, timedelta, timezone
+from app.models.models import Payment, Subscription, SubscriptionPlan
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -17,7 +20,6 @@ def stats(db: Session = Depends(get_db), u=Depends(require_admin)):
         "total_businesses": db.query(Business).count(),
         "total_products": db.query(Product).count(),
         "total_sales": db.query(Sale).count(),
-        "total_advertisements": db.query(Advertisement).count(),
     }
 
 
@@ -80,11 +82,134 @@ def activate(id: int, db: Session = Depends(get_db), u=Depends(require_admin)):
     return {"message": "User activated"}
 
 
-@router.delete("/advertisements/{id}")
-def remove(id: int, db: Session = Depends(get_db), u=Depends(require_admin)):
-    x = db.get(Advertisement, id)
-    if not x:
-        raise HTTPException(404, "Advertisement not found")
-    db.delete(x)
+# Kuona malipo yote yanayosubiri kuhakikiwa
+@router.get("/payments/pending")
+def pending_payments(
+    db: Session = Depends(get_db),
+    u=Depends(require_admin),
+):
+    payments = (
+        db.query(Payment)
+        .filter(Payment.status == "PENDING")
+        .order_by(Payment.created_at.asc())
+        .all()
+    )
+
+    return [
+        {
+            "id": p.id,
+            "user_id": p.user_id,
+            "plan_id": p.plan_id,
+            "plan_name": p.plan.name,
+            "amount": float(p.amount),
+            "phone_number": p.phone_number,
+            "transaction_reference": p.transaction_reference,
+            "status": p.status,
+            "created_at": p.created_at,
+        }
+        for p in payments
+    ]
+
+
+# Kukubali malipo baada ya kuthibitisha kupokea pesa
+@router.post("/payments/{payment_id}/approve")
+def approve_payment(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    u=Depends(require_admin),
+):
+    payment = db.get(Payment, payment_id)
+
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    if payment.status != "PENDING":
+        raise HTTPException(
+            status_code=400,
+            detail="Payment is already reviewed",
+        )
+
+    # Pata kifurushi kilicholipiwa
+    plan = db.get(SubscriptionPlan, payment.plan_id)
+
+    if not plan or not plan.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="Subscription plan is unavailable",
+        )
+
+    # MUHIMU: Admin lazima athibitishe muamala wa M-Pesa
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Kama subscription iliyopo bado hai, ongeza muda juu ya muda uliobaki
+    subscription = (
+        db.query(Subscription)
+        .filter(
+            Subscription.user_id == payment.user_id,
+            Subscription.status == "ACTIVE",
+            Subscription.expires_at > now,
+        )
+        .order_by(Subscription.expires_at.desc())
+        .first()
+    )
+
+    if subscription:
+        subscription.expires_at += timedelta(days=plan.duration_days)
+        subscription.plan_id = plan.id
+    else:
+        # Anzisha subscription mpya
+        subscription = Subscription(
+            user_id=payment.user_id,
+            plan_id=plan.id,
+            starts_at=now,
+            expires_at=now + timedelta(days=plan.duration_days),
+            status="ACTIVE",
+        )
+        db.add(subscription)
+
+    # Hifadhi taarifa za uhakiki
+    payment.status = "APPROVED"
+    payment.reviewed_by = u.id
+    payment.reviewed_at = now
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to approve payment",
+        )
+
+    return {
+        "message": "Payment approved and subscription activated",
+        "payment_id": payment.id,
+        "subscription_expires_at": subscription.expires_at,
+    }
+
+
+# Kukataa malipo yasiyothibitishwa
+@router.post("/payments/{payment_id}/reject")
+def reject_payment(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    u=Depends(require_admin),
+):
+    payment = db.get(Payment, payment_id)
+
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    if payment.status != "PENDING":
+        raise HTTPException(
+            status_code=400,
+            detail="Payment is already reviewed",
+        )
+
+    payment.status = "REJECTED"
+    payment.reviewed_by = u.id
+    payment.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
     db.commit()
-    return {"message": "Advertisement removed"}
+
+    return {"message": "Payment rejected", "payment_id": payment.id}

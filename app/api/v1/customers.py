@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import require_active_subscription
 from app.models import Customer
 from app.schemas.schemas import CustomerIn, CustomerOut
 
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 
 
 @router.get("", response_model=list[CustomerOut])
-def all(db: Session = Depends(get_db), u=Depends(get_current_user)):
+def all(db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     return (
         db.query(Customer)
         .filter(Customer.owner_id == u.id)
@@ -19,7 +19,7 @@ def all(db: Session = Depends(get_db), u=Depends(get_current_user)):
 
 
 @router.post("", response_model=CustomerOut)
-def create(d: CustomerIn, db: Session = Depends(get_db), u=Depends(get_current_user)):
+def create(d: CustomerIn, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     c = Customer(owner_id=u.id, **d.model_dump())
     db.add(c)
     db.commit()
@@ -29,7 +29,7 @@ def create(d: CustomerIn, db: Session = Depends(get_db), u=Depends(get_current_u
 
 @router.put("/{id}", response_model=CustomerOut)
 def update(
-    id: int, d: CustomerIn, db: Session = Depends(get_db), u=Depends(get_current_user)
+    id: int, d: CustomerIn, db: Session = Depends(get_db), u=Depends(require_active_subscription)
 ):
     c = db.query(Customer).filter(Customer.id == id, Customer.owner_id == u.id).first()
     if not c:
@@ -42,7 +42,7 @@ def update(
 
 
 @router.delete("/{id}")
-def delete(id: int, db: Session = Depends(get_db), u=Depends(get_current_user)):
+def delete(id: int, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
     c = db.query(Customer).filter(Customer.id == id, Customer.owner_id == u.id).first()
     if not c:
         raise HTTPException(404, "Customer not found")

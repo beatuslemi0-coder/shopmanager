@@ -143,27 +143,6 @@ class CustomerOut(ORM):
     notes: str | None
 
 
-class AdvertisementIn(BaseModel):
-    product_id: int | None = None
-    title: str
-    description: str | None = None
-    price: Decimal | None = None
-    image_url: str | None = None
-    is_published: bool = True
-
-
-class AdvertisementOut(ORM):
-    id: int
-    business_id: int
-    product_id: int | None
-    title: str
-    description: str | None
-    price: Decimal | None
-    image_url: str | None
-    is_published: bool
-    created_at: datetime
-
-
 class ReportOut(BaseModel):
     date_from: str
     date_to: str
@@ -183,13 +162,20 @@ class DashboardOut(ReportOut):
     total_customers: int
 
 
+class DailyTrendPoint(BaseModel):
+    date: str
+    revenue: Decimal
+    expenses: Decimal
+    net_profit: Decimal
+    sales_count: int
+
+
 class AdminStats(BaseModel):
     total_users: int
     active_users: int
     total_businesses: int
     total_products: int
     total_sales: int
-    total_advertisements: int
 
 
 class AdminUserOut(BaseModel):
