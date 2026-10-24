@@ -1489,13 +1489,25 @@ function setupProfilePhoto() {
 function setupTheme() {
   const saved = localStorage.getItem("theme");
   if (saved) document.documentElement.setAttribute("data-theme", saved);
-  $("themeToggle").addEventListener("click", () => {
+  const toggle = $("themeToggle");
+  const updateToggle = () => {
+    const darkMode =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    toggle.setAttribute("aria-pressed", String(darkMode));
+    toggle.setAttribute(
+      "aria-label",
+      translate(darkMode ? "Switch to light mode" : "Switch to dark mode"),
+    );
+  };
+  updateToggle();
+  toggle.addEventListener("click", () => {
     const next =
       document.documentElement.getAttribute("data-theme") === "dark"
         ? "light"
         : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+    updateToggle();
   });
 }
 
