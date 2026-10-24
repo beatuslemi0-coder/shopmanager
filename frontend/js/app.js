@@ -127,8 +127,8 @@ const swahili = {
   "Choose month": "Chagua mwezi",
   "Daily financial overview": "Muhtasari wa fedha kwa siku",
   "Number of sales per day": "Idadi ya mauzo kwa siku",
-  "Each bar shows one day. Hover over a bar to see its date and value.":
-    "Kila pau inaonyesha siku moja. Elekeza kipanya kwenye pau kuona tarehe na kiasi.",
+  "Each bar shows one day. Select a bar to see its date and values.":
+    "Kila pau inaonyesha siku moja. Chagua pau kuona tarehe na kiasi.",
   "No activity for this month.": "Hakuna shughuli za biashara mwezi huu.",
   "Each month shows revenue, expenses and net profit. Hover over a bar for details.":
     "Kila mwezi unaonyesha mapato, matumizi na faida halisi. Elekeza kipanya kwenye pau kuona maelezo.",
@@ -587,6 +587,23 @@ function dailyActivityChart(days, series, formatValue) {
       return `<text class="trend-month" x="${margin.left + groupWidth * (index + 0.5)}" y="${height - 18}" text-anchor="middle">${escapeHtml(label)}</text>`;
     })
     .join("");
+  const dayHitTargets = days
+    .map((day, dayIndex) => {
+      const dateLabel = new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+      }).format(new Date(`${day.date}T00:00:00`));
+      const details = `${dateLabel} · ${series
+        .map(({ key, label }) => {
+          const value = Number(day[key]) || 0;
+          const displayValue =
+            key === "sales_count" ? String(value) : money(value);
+          return `${translate(label)}: ${displayValue}`;
+        })
+        .join(" · ")}`;
+      const x = margin.left + groupWidth * dayIndex;
+      return `<rect class="trend-day-hit" x="${x}" y="${margin.top}" width="${groupWidth}" height="${plotHeight}" role="button" tabindex="${dayIndex === 0 ? 0 : -1}" aria-pressed="false" aria-label="${escapeHtml(details)}" data-tooltip="${escapeHtml(details)}"><title>${escapeHtml(details)}</title></rect>`;
+    })
+    .join("");
   const bars = days
     .map((day, dayIndex) => {
       const groupStart =
@@ -610,7 +627,8 @@ function dailyActivityChart(days, series, formatValue) {
         .join("");
     })
     .join("");
-  return `<div class="trend-chart-wrap"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(series.map(({ label }) => translate(label)).join(", "))}">${grid}<line class="trend-zero-line" x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}"></line>${bars}${dateLabels}</svg></div>`;
+  const mobileWidth = Math.ceil(days.length * 44 + margin.left + margin.right);
+  return `<div class="trend-chart-wrap"><svg class="trend-chart" style="--trend-mobile-width:${mobileWidth}px" viewBox="0 0 ${width} ${height}" role="group" aria-label="${escapeHtml(series.map(({ label }) => translate(label)).join(", "))}">${grid}<line class="trend-zero-line" x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}"></line>${bars}${dayHitTargets}${dateLabels}</svg><p class="trend-touch-details" aria-live="polite" hidden></p></div>`;
 }
 
 function monthlyActivityChart(days, month) {
@@ -652,7 +670,7 @@ function monthlyActivityChart(days, month) {
       maximumFractionDigits: 1,
     }).format(value)}`;
 
-  return `<section class="panel" id="monthlyActivity"><div class="panel-heading"><div><h2>${escapeHtml(translate("Monthly business trend"))}</h2><p class="trend-help">${escapeHtml(monthLabel)} · ${escapeHtml(translate("Each bar shows one day. Hover over a bar to see its date and value."))}</p></div><label class="field field--compact trend-month-picker"><span>${escapeHtml(translate("Choose month"))}</span><input id="dashboardMonth" type="month" value="${escapeHtml(month)}" max="${maxMonth}"></label></div><div id="monthlyTrendCharts">${emptyMessage || `<h3 class="trend-section-title">${escapeHtml(translate("Daily financial overview"))}</h3><div class="trend-legend">${legend(financialSeries)}</div>${dailyActivityChart(days, financialSeries, moneyAxis)}<h3 class="trend-section-title">${escapeHtml(translate("Number of sales per day"))}</h3><div class="trend-legend">${legend(salesSeries)}</div>${dailyActivityChart(days, salesSeries, (value) => new Intl.NumberFormat(locale).format(value))}`}</div></section>`;
+  return `<section class="panel" id="monthlyActivity"><div class="panel-heading"><div><h2>${escapeHtml(translate("Monthly business trend"))}</h2><p class="trend-help">${escapeHtml(monthLabel)} · ${escapeHtml(translate("Each bar shows one day. Select a bar to see its date and values."))}</p></div><label class="field field--compact trend-month-picker"><span>${escapeHtml(translate("Choose month"))}</span><input id="dashboardMonth" type="month" value="${escapeHtml(month)}" max="${maxMonth}"></label></div><div id="monthlyTrendCharts">${emptyMessage || `<h3 class="trend-section-title">${escapeHtml(translate("Daily financial overview"))}</h3><div class="trend-legend">${legend(financialSeries)}</div>${dailyActivityChart(days, financialSeries, moneyAxis)}<h3 class="trend-section-title">${escapeHtml(translate("Number of sales per day"))}</h3><div class="trend-legend">${legend(salesSeries)}</div>${dailyActivityChart(days, salesSeries, (value) => new Intl.NumberFormat(locale).format(value))}`}</div></section>`;
 }
 
 function tablePanel(title, headers, rows, emptyText, actions = [], tools = "") {
@@ -1540,6 +1558,34 @@ function setupMobileMenu() {
 
 $("nav").addEventListener("click", handleViewClick);
 view.addEventListener("click", handleViewClick);
+view.addEventListener("click", (event) => {
+  const target = event.target.closest(".trend-day-hit");
+  if (!target) return;
+  const chart = target.closest(".trend-chart-wrap");
+  chart.querySelectorAll(".trend-day-hit").forEach((hit) => {
+    hit.classList.remove("is-selected");
+    hit.setAttribute("aria-pressed", "false");
+  });
+  target.classList.add("is-selected");
+  target.setAttribute("aria-pressed", "true");
+  const details = chart.querySelector(".trend-touch-details");
+  details.textContent = target.dataset.tooltip;
+  details.hidden = false;
+});
+view.addEventListener("keydown", (event) => {
+  const target = event.target.closest(".trend-day-hit");
+  if (!target) return;
+  const hits = [...target.closest(".trend-chart").querySelectorAll(".trend-day-hit")];
+  const index = hits.indexOf(target);
+  if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    event.preventDefault();
+    const offset = event.key === "ArrowRight" ? 1 : -1;
+    hits[(index + offset + hits.length) % hits.length].focus();
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    target.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  }
+});
 view.addEventListener("submit", handleFormSubmit);
 view.addEventListener("input", (event) => {
   const skuSearch = event.target.closest('.sale-line [name="sku_search"]');

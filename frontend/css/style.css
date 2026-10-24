@@ -1183,6 +1183,34 @@ svg {
 .trend-bar:hover {
   opacity: 1;
 }
+.trend-day-hit {
+  fill: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.trend-day-hit:hover,
+.trend-day-hit:focus,
+.trend-day-hit.is-selected {
+  fill: rgba(198, 155, 84, 0.14);
+  outline: none;
+}
+.trend-day-hit:focus {
+  stroke: rgba(198, 155, 84, 0.7);
+  stroke-width: 1;
+}
+.trend-touch-details {
+  position: sticky;
+  left: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 10px;
+  margin: 4px 0 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 12px;
+}
 .trend-help {
   margin: -8px 0 14px;
   color: var(--text-muted);
@@ -1430,6 +1458,9 @@ tbody tr:last-child td {
   }
 }
 @media (max-width: 700px) {
+  .trend-chart {
+    min-width: max(680px, var(--trend-mobile-width, 680px));
+  }
   .app {
     display: block;
     min-height: 100vh;
