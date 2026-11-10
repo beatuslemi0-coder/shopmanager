@@ -456,9 +456,13 @@ function renderProfileAvatar() {
   avatar.innerHTML = `${image}<span class="avatar-edit" aria-hidden="true">+</span>`;
 }
 
+function isAdmin(user) {
+  return user.role.toLowerCase() === "admin";
+}
+
 function renderNav() {
   const items = [...sections];
-  if (store.user.role === "admin") items.push(["admin", "Admin"]);
+  if (isAdmin(store.user)) items.push(["admin", "Admin"]);
   $("nav").innerHTML = items
     .map(
       ([id, label]) =>
@@ -1125,7 +1129,7 @@ async function renderBusiness() {
 }
 
 async function renderAdmin() {
-  if (store.user.role !== "admin") throw new Error("admin access required");
+  if (!isAdmin(store.user)) throw new Error("admin access required");
   const [stats, users, pendingPayments] = await Promise.all([
     api.adminStats(),
     api.adminUsers(),
@@ -1189,7 +1193,7 @@ async function renderAdmin() {
         escapeHtml(user.full_name),
         escapeHtml(user.email),
         escapeHtml(user.business_name || "—"),
-        user.role === "admin" ? "admin" : "Business owner",
+        isAdmin(user) ? "admin" : "Business owner",
         user.is_active
           ? '<span class="status">Active</span>'
           : '<span class="status status--low">Inactive</span>',
