@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.dependencies import TRIAL_DAYS, get_current_user
+from app.api.dependencies import (
+    TRIAL_DAYS,
+    get_current_user,
+    require_active_subscription,
+)
 from app.core.security import hash_password, verify_password, create_access_token
 from app.models import User
 from app.schemas.schemas import *
@@ -50,7 +54,11 @@ def me(u=Depends(get_current_user)):
 
 
 @router.put("/me/profile-image", response_model=UserOut)
-def update_profile_image(data: ProfileImageUpdate, u=Depends(get_current_user), db: Session = Depends(get_db)):
+def update_profile_image(
+    data: ProfileImageUpdate,
+    u=Depends(require_active_subscription),
+    db: Session = Depends(get_db),
+):
     u.profile_image_url = data.profile_image_url
     db.commit()
     db.refresh(u)

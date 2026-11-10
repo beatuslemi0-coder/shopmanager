@@ -20,11 +20,11 @@ def main():
             parser.error(f"No account found for {email}. Register the account first.")
         if not user.is_active:
             parser.error("This account is inactive. Activate it before granting admin access.")
-        if user.role == "admin":
+        if user.role == "ADMIN":
             print(f"{user.email} already has admin access.")
             return
 
-        user.role = "admin"
+        user.role = "ADMIN"
         db.commit()
         print(f"Admin access granted to {user.email}. Sign out and sign in again to see Admin.")
     finally:
