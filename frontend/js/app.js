@@ -7,6 +7,8 @@ const store = {
   customers: [],
   expenses: [],
   section: "dashboard",
+  dashboardOffline: false,
+  dashboardCache: null,
   editing: null,
   authMode: "login",
   authEmail: "",
@@ -104,11 +106,16 @@ const swahili = {
   Admin: "Msimamizi",
   "Sign out": "Toka",
   Connected: "Imeunganishwa",
+  Offline: "Nje ya mtandao",
   Loading: "Inapakia",
   "API error": "Hitilafu ya API",
   "Loading…": "Inapakia…",
   "Working...": "Inachakata...",
   "Revenue today": "Mapato ya leo",
+  "Showing saved information from this device. Some values may be outdated until you reconnect.":
+    "Inaonyesha taarifa zilizohifadhiwa kwenye kifaa hiki. Baadhi ya taarifa zinaweza kuwa za zamani hadi uunganishwe tena.",
+  "No dashboard data has been saved on this device yet. Connect once to load your business information.":
+    "Hakuna taarifa za dashibodi zilizohifadhiwa kwenye kifaa hiki. Unganisha mtandao mara moja kupakia taarifa za biashara yako.",
   "Net profit": "Faida halisi",
   Products: "Bidhaa",
   Customers: "Wateja",
@@ -432,8 +439,30 @@ function renderAuthFields() {
   applyLanguage($("authScreen"));
 }
 
+function isNetworkUnavailable(error) {
+  return (
+    !navigator.onLine ||
+    String(error?.message || "").includes("Could not reach the API at")
+  );
+}
+
 async function enterWorkspace() {
-  store.user = await api.me();
+  try {
+    store.user = await api.me();
+    try {
+      await saveOfflineData("app_data", {
+        key: "session-user",
+        value: store.user,
+      });
+    } catch (cacheError) {
+      console.warn("Could not save the user profile for offline access:", cacheError);
+    }
+  } catch (error) {
+    if (!isNetworkUnavailable(error)) throw error;
+    const cachedUser = await getOfflineData("app_data", "session-user");
+    if (!cachedUser?.value) throw error;
+    store.user = cachedUser.value;
+  }
   try {
     store.business = await api.business();
   } catch {
@@ -473,6 +502,7 @@ function renderNav() {
 
 async function navigate(section) {
   store.section = section;
+  store.dashboardOffline = false;
   store.editing = null;
   renderNav();
   const title =
@@ -491,7 +521,8 @@ async function navigate(section) {
     else if (section === "subscription") await renderSubscription();
     else if (section === "business") await renderBusiness();
     else if (section === "admin") await renderAdmin();
-    $("apiIndicator").textContent = "Connected";
+    $("apiIndicator").textContent =
+      store.dashboardOffline || !navigator.onLine ? "Offline" : "Connected";
   } catch (error) {
     $("apiIndicator").textContent = "API error";
     const subscriptionRequired = error.message.includes(
@@ -506,14 +537,252 @@ function stat(label, value, detail = "") {
   return `<article class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(detail)}</small></article>`;
 }
 
+function dashboardCacheKey() {
+  const userId = store.user?.id || store.user?.email || "current";
+  return `dashboard:${userId}`;
+}
+
+function dashboardRecordKey(record) {
+  if (record.offline_id?.startsWith("server-") && record.id != null)
+    return `server:${record.id}`;
+  if (record.offline_id) return `offline:${record.offline_id}`;
+  if (record.id != null) return `server:${record.id}`;
+  return null;
+}
+
+function mergeDashboardRecords(savedRecords = [], localRecords = [], getKey) {
+  const records = new Map();
+  for (const record of [...savedRecords, ...localRecords]) {
+    const key = getKey(record);
+    if (key) records.set(key, record);
+  }
+  return [...records.values()];
+}
+
+function dashboardRecordDate(record) {
+  const value = record.created_at || record.offline_created_at;
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function dashboardDateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function sumDashboardValues(records, field) {
+  return records.reduce((sum, record) => sum + Number(record[field] || 0), 0);
+}
+
+function offlineDashboardSummary(snapshot, sales, expenses, products, customers) {
+  const todayKey = dashboardDateKey(new Date());
+  const todaysSales = sales.filter(
+    (sale) => dashboardRecordDate(sale) && dashboardDateKey(dashboardRecordDate(sale)) === todayKey,
+  );
+  const todaysExpenses = expenses.filter(
+    (expense) =>
+      dashboardRecordDate(expense) &&
+      dashboardDateKey(dashboardRecordDate(expense)) === todayKey,
+  );
+  const revenue = sumDashboardValues(todaysSales, "total_amount");
+  const costOfGoods = sumDashboardValues(todaysSales, "total_cost");
+  const grossProfit = revenue - costOfGoods;
+  const expenseTotal = sumDashboardValues(todaysExpenses, "amount");
+  const netProfit = grossProfit - expenseTotal;
+  const savedSummary =
+    snapshot?.date === todayKey ? snapshot.data : null;
+  const savedSaleKeys = new Set(
+    (snapshot?.sales || []).map(dashboardRecordKey).filter(Boolean),
+  );
+  const newlySavedProducts = todaysSales
+    .filter((sale) => !savedSaleKeys.has(dashboardRecordKey(sale)))
+    .reduce(
+      (total, sale) =>
+        total +
+        (sale.items || []).reduce(
+          (quantity, item) => quantity + Number(item.quantity || 0),
+          0,
+        ),
+      0,
+    );
+  const productsSold =
+    savedSummary != null
+      ? Number(savedSummary.products_sold || 0) + newlySavedProducts
+      : todaysSales.reduce(
+          (total, sale) =>
+            total +
+            (sale.items || []).reduce(
+              (quantity, item) => quantity + Number(item.quantity || 0),
+              0,
+            ),
+          0,
+        );
+  const activeProducts = products.filter((product) => product.is_active !== false);
+
+  return {
+    revenue,
+    cost_of_goods: costOfGoods,
+    gross_profit: grossProfit,
+    expenses: expenseTotal,
+    net_profit: netProfit,
+    profit_margin: revenue ? (netProfit / revenue) * 100 : 0,
+    sales_count: todaysSales.length,
+    products_sold: productsSold,
+    total_products: activeProducts.length,
+    low_stock_products: activeProducts.filter(
+      (product) =>
+        Number(product.stock_quantity || 0) <= Number(product.minimum_stock || 0),
+    ).length,
+    total_customers: customers.length,
+  };
+}
+
+function offlineMonthlyTrend(sales, expenses, month) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const dailyTotals = Array.from({ length: daysInMonth }, (_, index) => {
+    const date = new Date(year, monthNumber - 1, index + 1);
+    return {
+      date: dashboardDateKey(date),
+      revenue: 0,
+      cost_of_goods: 0,
+      expenses: 0,
+      sales_count: 0,
+    };
+  });
+  const dayByDate = new Map(dailyTotals.map((day) => [day.date, day]));
+
+  for (const sale of sales) {
+    const date = dashboardRecordDate(sale);
+    const day = date && dayByDate.get(dashboardDateKey(date));
+    if (!day) continue;
+    day.revenue += Number(sale.total_amount || 0);
+    day.cost_of_goods += Number(sale.total_cost || 0);
+    day.sales_count += 1;
+  }
+  for (const expense of expenses) {
+    const date = dashboardRecordDate(expense);
+    const day = date && dayByDate.get(dashboardDateKey(date));
+    if (day) day.expenses += Number(expense.amount || 0);
+  }
+
+  return dailyTotals.map((day) => ({
+    ...day,
+    net_profit: day.revenue - day.cost_of_goods - day.expenses,
+  }));
+}
+
 async function renderDashboard() {
   const currentMonth = new Date();
   const selectedMonth = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`;
-  const [data, recentSales, monthlyTrend] = await Promise.all([
-    api.dashboard(),
-    api.sales(),
-    api.monthlyTrend(selectedMonth),
-  ]);
+  let data;
+  let sales;
+  let products;
+  let customers;
+  let expenses;
+  let monthlyTrend;
+  let snapshot;
+  let offline = !navigator.onLine;
+
+  if (!offline) {
+    try {
+      [data, sales, monthlyTrend] = await Promise.all([
+        api.dashboard(),
+        api.sales(),
+        api.monthlyTrend(selectedMonth),
+      ]);
+      [products, customers, expenses] = await Promise.all([
+        api.products().catch(async (error) => {
+          console.warn("Could not refresh dashboard products for offline use:", error);
+          return getAllOfflineData("products");
+        }),
+        api.customers().catch(async (error) => {
+          console.warn("Could not refresh dashboard customers for offline use:", error);
+          return getAllOfflineData("customers");
+        }),
+        api.expenses().catch(async (error) => {
+          console.warn("Could not refresh dashboard expenses for offline use:", error);
+          return getAllOfflineData("expenses");
+        }),
+      ]);
+      snapshot = {
+        date: dashboardDateKey(new Date()),
+        data,
+        sales,
+        products,
+        customers,
+        expenses,
+      };
+      try {
+        await saveOfflineData("app_data", {
+          key: dashboardCacheKey(),
+          value: snapshot,
+        });
+      } catch (cacheError) {
+        console.warn(
+          "Could not save dashboard information for offline use:",
+          cacheError,
+        );
+      }
+    } catch (error) {
+      if (!isNetworkUnavailable(error)) throw error;
+      offline = true;
+    }
+  }
+
+  if (offline) {
+    const [savedDashboard, localSales, localProducts, localCustomers, localExpenses, queue] =
+      await Promise.all([
+        getOfflineData("app_data", dashboardCacheKey()),
+        getAllOfflineData("sales"),
+        getAllOfflineData("products"),
+        getAllOfflineData("customers"),
+        getAllOfflineData("expenses"),
+        getAllOfflineData("sync_queue"),
+      ]);
+    snapshot = savedDashboard?.value || null;
+    sales = mergeDashboardRecords(
+      snapshot?.sales || [],
+      localSales,
+      dashboardRecordKey,
+    );
+    products = mergeDashboardRecords(
+      snapshot?.products || [],
+      localProducts,
+      (product) => (product.id == null ? null : `product:${product.id}`),
+    );
+    customers = mergeDashboardRecords(
+      snapshot?.customers || [],
+      localCustomers,
+      (customer) => (customer.id == null ? null : `customer:${customer.id}`),
+    );
+    const deletedExpenseIds = new Set(
+      queue
+        .filter((job) => job.entity === "expense" && job.operation === "delete")
+        .map((job) => Number(job.local_id)),
+    );
+    expenses = mergeDashboardRecords(
+      snapshot?.expenses || [],
+      localExpenses,
+      dashboardRecordKey,
+    ).filter((expense) => !deletedExpenseIds.has(Number(expense.id)));
+    data = offlineDashboardSummary(snapshot, sales, expenses, products, customers);
+    monthlyTrend = offlineMonthlyTrend(sales, expenses, selectedMonth);
+  }
+
+  store.dashboardOffline = offline;
+  store.dashboardCache = { sales, products, customers, expenses };
+  const recentSales = [...sales].sort((a, b) => {
+    const dateA = dashboardRecordDate(a)?.getTime() || 0;
+    const dateB = dashboardRecordDate(b)?.getTime() || 0;
+    return dateB - dateA;
+  });
+  const hasSavedData =
+    Boolean(snapshot) ||
+    sales.length > 0 ||
+    products.length > 0 ||
+    customers.length > 0 ||
+    expenses.length > 0;
   const today = [
     ["Revenue today", money(data.revenue), `${data.sales_count} sales`],
     [
@@ -532,7 +801,7 @@ async function renderDashboard() {
       `${data.products_sold} units sold today`,
     ],
   ];
-  view.innerHTML = `<section class="metrics-grid">${today.map((item) => stat(...item)).join("")}</section>
+  view.innerHTML = `${offline ? `<section class="panel"><p>${escapeHtml(translate("Showing saved information from this device. Some values may be outdated until you reconnect."))}</p>${hasSavedData ? "" : `<p class="empty-inline">${escapeHtml(translate("No dashboard data has been saved on this device yet. Connect once to load your business information."))}</p>`}</section>` : ""}<section class="metrics-grid">${today.map((item) => stat(...item)).join("")}</section>
     <section class="panel"><div class="panel-heading"><div><p class="eyebrow">TODAY</p><h2>Business activity</h2></div><button class="button button--secondary" data-nav="reports">View reports</button></div>
     <div class="summary-grid">${stat("Cost of goods", money(data.cost_of_goods))}${stat("Expenses", money(data.expenses))}${stat("Gross profit", money(data.gross_profit))}</div></section>
     ${tablePanel(
@@ -541,15 +810,14 @@ async function renderDashboard() {
       recentSales
         .slice(0, 8)
         .map((sale) => [
-          `#${sale.id}`,
-          new Date(sale.created_at).toLocaleString(),
-          sale.payment_method,
+          `#${sale.id ?? sale.offline_id}`,
+          dashboardRecordDate(sale)?.toLocaleString() || "—",
+          sale.payment_method || "Cash",
           money(sale.total_amount),
           money(sale.profit),
         ]),
       "No sales recorded yet.",
-    )}
-    ${monthlyActivityChart(monthlyTrend, selectedMonth)}`;
+    )}${monthlyActivityChart(monthlyTrend, selectedMonth)}`;
 }
 
 function dailyActivityChart(days, series, formatValue) {
@@ -714,101 +982,300 @@ function actionButton(action, id, label, danger = false) {
 }
 
 async function renderProducts(search = "") {
-  store.products = await api.products(search);
-  const product = store.editing?.type === "product" ? store.editing.record : {};
-  const formFields = [
-    field("name", "Product name", "text", product.name || "", {
-      required: true,
-    }),
-    field("sku", "SKU", "text", product.sku || ""),
-    field(
-      "buying_price",
-      "Buying price",
-      "number",
-      product.buying_price || "",
-      { required: true, min: 0, step: "0.01" },
-    ),
-    field(
-      "selling_price",
-      "Selling price",
-      "number",
-      product.selling_price || "",
-      { required: true, min: 0, step: "0.01" },
-    ),
-    field(
-      "stock_quantity",
-      "Stock quantity",
-      "number",
-      product.stock_quantity ?? 0,
-      { required: true, min: 0 },
-    ),
-    field(
-      "minimum_stock",
-      "Minimum stock",
-      "number",
-      product.minimum_stock ?? 5,
-      { required: true, min: 0 },
-    ),
-    field("description", "Description", "textarea", product.description || "", {
-      wide: true,
-    }),
-  ];
-  view.innerHTML = `${editor(store.editing ? "Edit product" : "Add product", formFields, store.editing ? "Update product" : "Add product")}
+
+    try {
+
+        // 1. Jaribu kupata bidhaa kutoka FastAPI
+        if (navigator.onLine) {
+
+            try {
+
+                store.products = await api.products(search);
+
+                // Hifadhi bidhaa zilizopatikana kwenye IndexedDB
+                await saveMultipleOfflineData(
+                    "products",
+                    store.products
+                );
+
+                console.log("Products synchronized successfully!");
+
+            } catch (apiError) {
+
+                console.warn(
+                    "API unavailable. Loading products offline.",
+                    apiError
+                );
+
+                // 2. Kama API imeshindwa, tumia IndexedDB
+                store.products = await getAllOfflineData("products");
+
+            }
+
+        } else {
+
+            // 3. Hakuna internet: soma bidhaa kutoka IndexedDB
+            store.products = await getAllOfflineData("products");
+
+        }
+
+        // 4. Search ya bidhaa ifanye kazi hata offline
+        if (search.trim()) {
+
+            const keyword = search.toLowerCase().trim();
+
+            store.products = store.products.filter((product) =>
+
+                String(product.name || "")
+                    .toLowerCase()
+                    .includes(keyword) ||
+
+                String(product.sku || "")
+                    .toLowerCase()
+                    .includes(keyword)
+
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error("Products loading failed:", error);
+
+        throw error;
+
+    }
+
+    // 5. Endelea na muonekano wa kawaida wa Inventory
+    const product = store.editing?.type === "product"
+        ? store.editing.record
+        : {};
+
+    const formFields = [
+        field("name", "Product name", "text", product.name || "", {
+            required: true,
+        }),
+
+        field("sku", "SKU", "text", product.sku || ""),
+
+        field(
+            "buying_price",
+            "Buying price",
+            "number",
+            product.buying_price || "",
+            { required: true, min: 0, step: "0.01" },
+        ),
+
+        field(
+            "selling_price",
+            "Selling price",
+            "number",
+            product.selling_price || "",
+            { required: true, min: 0, step: "0.01" },
+        ),
+
+        field(
+            "stock_quantity",
+            "Stock quantity",
+            "number",
+            product.stock_quantity ?? 0,
+            { required: true, min: 0 },
+        ),
+
+        field(
+            "minimum_stock",
+            "Minimum stock",
+            "number",
+            product.minimum_stock ?? 5,
+            { required: true, min: 0 },
+        ),
+
+        field("description", "Description", "textarea", product.description || "", {
+            wide: true,
+        }),
+    ];
+
+    view.innerHTML = `${editor(
+        store.editing ? "Edit product" : "Add product",
+        formFields,
+        store.editing ? "Update product" : "Add product"
+    )}
+
     ${tablePanel(
-      "Inventory",
-      ["Product", "SKU", "Price", "Stock", "Status"],
-      store.products.map((item) => [
-        escapeHtml(item.name),
-        escapeHtml(item.sku || "—"),
-        money(item.selling_price),
-        item.stock_quantity,
-        item.stock_quantity <= item.minimum_stock
-          ? '<span class="status status--low">Low stock</span>'
-          : '<span class="status">In stock</span>',
-      ]),
-      "No products yet.",
-      [
-        (row, index) =>
-          actionButton("edit-product", store.products[index]?.id, "Edit"),
-        (row, index) =>
-          actionButton(
-            "delete-product",
-            store.products[index]?.id,
-            "Delete",
-            true,
-          ),
-      ],
-      `<label class="inline-search"><span class="visually-hidden">Search products</span><input id="productSearch" type="search" value="${escapeHtml(search)}" placeholder="Search products"></label>`,
+        "Inventory",
+        ["Product", "SKU", "Price", "Stock", "Status"],
+
+        store.products.map((item) => [
+            escapeHtml(item.name),
+            escapeHtml(item.sku || "—"),
+            money(item.selling_price),
+            item.stock_quantity,
+
+            item.stock_quantity <= item.minimum_stock
+                ? '<span class="status status--low">Low stock</span>'
+                : '<span class="status">In stock</span>',
+        ]),
+
+        "No products yet.",
+
+        [
+            (row, index) =>
+                actionButton(
+                    "edit-product",
+                    store.products[index]?.id,
+                    "Edit"
+                ),
+
+            (row, index) =>
+                actionButton(
+                    "delete-product",
+                    store.products[index]?.id,
+                    "Delete",
+                    true
+                ),
+        ],
+
+        `<label class="inline-search">
+            <span class="visually-hidden">Search products</span>
+            <input
+                id="productSearch"
+                type="search"
+                value="${escapeHtml(search)}"
+                placeholder="Search products"
+            >
+        </label>`,
     )}`;
 }
 
 async function renderSales() {
-  const [sales, products, customers] = await Promise.all([
-    api.sales(),
-    api.products(),
-    api.customers(),
-  ]);
-  store.products = products;
-  const rows = sales.map((sale) => [
-    `#${sale.id}`,
-    new Date(sale.created_at).toLocaleString(),
-    escapeHtml(sale.payment_method),
-    money(sale.total_amount),
-    money(sale.profit),
-  ]);
-  view.innerHTML = `<form class="panel editor-form" data-form="sale"><div class="panel-heading"><h2>Record sale</h2></div><div class="form-grid">
-    ${field("customer_id", "Customer", "select", "", { choices: [["", "Walk-in customer"], ...customers.map((item) => [item.id, item.name])] })}
-    ${field("payment_method", "Payment method", "select", "Cash", {
-      choices: [
-        ["Cash", "Cash"],
-        ["Card", "Card"],
-        ["Mobile Money", "Mobile Money"],
-        ["Bank Transfer", "Bank transfer"],
-      ],
-    })}
-    </div><div class="sale-lines" id="saleLines">${saleLine(products)}</div>
-    <div class="form-actions"><button class="button button--secondary" type="button" data-action="add-sale-line">Add item</button><button class="button button--primary" type="submit">Complete sale</button></div></form>
-    ${tablePanel("Sales history", ["Sale", "Date", "Payment", "Revenue", "Profit"], rows, "No sales recorded yet.")}`;
+    let sales = [];
+    let products = [];
+    let customers = [];
+
+    // 1. Pata taarifa kutoka API kama internet ipo
+    if (navigator.onLine) {
+        try {
+            sales = await api.sales();
+            await saveMultipleOfflineData("sales", sales);
+        } catch (error) {
+            console.warn("Could not load sales from API:", error);
+            sales = await getAllOfflineData("sales");
+        }
+
+        try {
+            products = await api.products();
+            await saveMultipleOfflineData("products", products);
+        } catch (error) {
+            console.warn("Could not load products from API:", error);
+            products = await getAllOfflineData("products");
+        }
+
+        try {
+            customers = await api.customers();
+            await saveMultipleOfflineData("customers", customers);
+        } catch (error) {
+            console.warn("Could not load customers from API:", error);
+            customers = await getAllOfflineData("customers");
+        }
+
+    } else {
+        // 2. Kama hakuna internet, tumia IndexedDB
+        sales = await getAllOfflineData("sales");
+        products = await getAllOfflineData("products");
+        customers = await getAllOfflineData("customers");
+    }
+
+    // 3. Hifadhi products na customers kwenye store
+    store.products = products;
+    store.customers = customers;
+
+    // 4. Tengeneza sales history
+    const rows = sales.map((sale) => [
+        `#${sale.id ?? sale.offline_id}`,
+        new Date(
+            sale.created_at || sale.offline_created_at || Date.now()
+        ).toLocaleString(),
+
+        escapeHtml(sale.payment_method || "Cash"),
+        money(sale.total_amount || 0),
+        money(sale.profit || 0),
+    ]);
+
+    // 5. Onyesha Sales page
+    view.innerHTML = `
+        <form class="panel editor-form" data-form="sale">
+
+            <div class="panel-heading">
+                <h2>Record sale</h2>
+            </div>
+
+            <div class="form-grid">
+
+                ${field(
+                    "customer_id",
+                    "Customer",
+                    "select",
+                    "",
+                    {
+                        choices: [
+                            ["", "Walk-in customer"],
+                            ...customers.map((item) => [
+                                item.id,
+                                item.name
+                            ])
+                        ]
+                    }
+                )}
+
+                ${field(
+                    "payment_method",
+                    "Payment method",
+                    "select",
+                    "Cash",
+                    {
+                        choices: [
+                            ["Cash", "Cash"],
+                            ["Card", "Card"],
+                            ["Mobile Money", "Mobile Money"],
+                            ["Bank Transfer", "Bank transfer"],
+                        ],
+                    }
+                )}
+
+            </div>
+
+            <div class="sale-lines" id="saleLines">
+                ${saleLine(products)}
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    class="button button--secondary"
+                    type="button"
+                    data-action="add-sale-line"
+                >
+                    Add item
+                </button>
+
+                <button
+                    class="button button--primary"
+                    type="submit"
+                >
+                    Complete sale
+                </button>
+
+            </div>
+
+        </form>
+
+        ${tablePanel(
+            "Sales history",
+            ["Sale", "Date", "Payment", "Revenue", "Profit"],
+            rows,
+            "No sales recorded yet."
+        )}
+    `;
 }
 
 function saleProductOptions(products, noMatch = false) {
@@ -827,12 +1294,132 @@ function saleProductOptions(products, noMatch = false) {
 
 function saleLine(products) {
   const searchLabel = translate("Search SKU");
-  return `<div class="sale-line"><label class="field"><span>${searchLabel}</span><input name="sku_search" type="search" placeholder="${searchLabel}" autocomplete="off"></label><label class="field"><span>${translate("Product")}</span><select name="product_id" required>${saleProductOptions(products)}</select></label><button class="mini-button mini-button--danger" type="button" data-action="remove-sale-line" aria-label="Remove item">Remove</button></div>`;
+
+  return `
+    <div class="sale-line">
+
+      <label class="field">
+        <span>${searchLabel}</span>
+        <input
+          name="sku_search"
+          type="search"
+          placeholder="${searchLabel}"
+          autocomplete="off"
+        >
+      </label>
+
+      <label class="field">
+        <span>${translate("Product")}</span>
+        <select name="product_id" required>
+          ${saleProductOptions(products)}
+        </select>
+      </label>
+
+      <label class="field">
+        <span>${translate("Quantity")}</span>
+        <input
+          name="quantity"
+          type="number"
+          min="1"
+          step="1"
+          value="1"
+          required
+        >
+      </label>
+
+      <button
+        class="mini-button mini-button--danger"
+        type="button"
+        data-action="remove-sale-line"
+        aria-label="Remove item"
+      >
+        Remove
+      </button>
+
+    </div>
+  `;
 }
 
 async function renderExpenses() {
-  store.expenses = await api.expenses();
-  const expense = store.editing?.type === "expense" ? store.editing.record : {};
+  let expenses = [];
+  const localExpenses = await getAllOfflineData("expenses");
+  const syncQueue = await getAllOfflineData("sync_queue");
+  const deletedExpenseIds = new Set(
+    syncQueue
+      .filter((job) => job.entity === "expense" && job.operation === "delete")
+      .map((job) => Number(job.local_id)),
+  );
+
+  if (navigator.onLine) {
+    try {
+      const response = await api.expenses();
+      const serverExpenses = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+      expenses = serverExpenses
+        .filter((item) => !deletedExpenseIds.has(Number(item.id)))
+        .map((item) => {
+          const localExpense = localExpenses.find(
+            (local) =>
+              local.sync_status === "pending" &&
+              (Number(local.id) === Number(item.id) ||
+                (item.offline_id &&
+                  local.offline_id === item.offline_id)),
+          );
+          return {
+            ...item,
+            ...(localExpense || {}),
+            id: item.id,
+            offline_id:
+              item.offline_id ||
+              localExpense?.offline_id ||
+              `server-${item.id}`,
+          };
+        });
+
+      const serverIds = new Set(expenses.map((item) => Number(item.id)));
+      const serverOfflineIds = new Set(
+        serverExpenses
+          .map((item) => item.offline_id)
+          .filter(Boolean),
+      );
+      const pendingLocalExpenses = localExpenses.filter(
+        (item) =>
+          item.sync_status === "pending" &&
+          Number(item.id) < 0 &&
+          !serverIds.has(Number(item.id)) &&
+          !serverOfflineIds.has(item.offline_id),
+      );
+      expenses.push(...pendingLocalExpenses);
+
+      await saveMultipleOfflineData(
+        "expenses",
+        expenses.map((item) => ({
+          ...item,
+          offline_id: item.offline_id || `server-${item.id}`,
+        })),
+      );
+    } catch (error) {
+      console.warn("Could not load expenses from API:", error);
+      expenses = localExpenses.filter(
+        (item) => !deletedExpenseIds.has(Number(item.id)),
+      );
+    }
+  } else {
+    expenses = localExpenses.filter(
+      (item) => !deletedExpenseIds.has(Number(item.id)),
+    );
+  }
+
+  store.expenses = expenses;
+
+  const expense = store.editing?.type === "expense"
+    ? store.editing.record
+    : {};
+
   const fields = [
     field("category", "Category", "text", expense.category || "", {
       required: true,
@@ -860,7 +1447,12 @@ async function renderExpenses() {
       wide: true,
     }),
   ];
-  view.innerHTML = `${editor(store.editing ? "Edit expense" : "Add expense", fields, store.editing ? "Update expense" : "Add expense")}${tablePanel(
+
+  view.innerHTML = `${editor(
+    store.editing ? "Edit expense" : "Add expense",
+    fields,
+    store.editing ? "Update expense" : "Add expense"
+  )}${tablePanel(
     "Expenses",
     ["Category", "Description", "Date", "Payment", "Amount"],
     store.expenses.map((item) => [
@@ -886,38 +1478,121 @@ async function renderExpenses() {
 }
 
 async function renderCustomers() {
-  store.customers = await api.customers();
-  const customer =
-    store.editing?.type === "customer" ? store.editing.record : {};
-  const fields = [
-    field("name", "Name", "text", customer.name || "", { required: true }),
-    field("phone", "Phone", "tel", customer.phone || ""),
-    field("email", "Email", "email", customer.email || ""),
-    field("address", "Address", "text", customer.address || ""),
-    field("notes", "Notes", "textarea", customer.notes || "", { wide: true }),
-  ];
-  view.innerHTML = `${editor(store.editing ? "Edit customer" : "Add customer", fields, store.editing ? "Update customer" : "Add customer")}${tablePanel(
-    "Customer directory",
-    ["Name", "Phone", "Email", "Address"],
-    store.customers.map((item) => [
-      escapeHtml(item.name),
-      escapeHtml(item.phone || "—"),
-      escapeHtml(item.email || "—"),
-      escapeHtml(item.address || "—"),
-    ]),
-    "No customers yet.",
-    [
-      (row, index) =>
-        actionButton("edit-customer", store.customers[index]?.id, "Edit"),
-      (row, index) =>
-        actionButton(
-          "delete-customer",
-          store.customers[index]?.id,
-          "Delete",
-          true,
-        ),
-    ],
-  )}`;
+
+    try {
+
+        // 1. Jaribu kupata Customers kutoka API
+        if (navigator.onLine) {
+
+            try {
+
+                store.customers = await api.customers();
+
+                // Hifadhi Customers kwenye IndexedDB
+                await saveMultipleOfflineData(
+                    "customers",
+                    store.customers
+                );
+
+                console.log("Customers loaded from API successfully.");
+
+            } catch (apiError) {
+
+                console.warn(
+                    "API unavailable. Loading Customers offline.",
+                    apiError
+                );
+
+                // Tumia IndexedDB kama API haipatikani
+                store.customers = await getAllOfflineData("customers");
+
+            }
+
+        } else {
+
+            // 2. Hakuna internet: tumia IndexedDB
+            store.customers = await getAllOfflineData("customers");
+
+            console.log("Customers loaded from IndexedDB.");
+
+        }
+
+    } catch (error) {
+
+        console.error("Customers loading failed:", error);
+
+        store.customers = [];
+
+    }
+
+    // 3. Customer anayehaririwa
+    const customer =
+        store.editing?.type === "customer"
+            ? store.editing.record
+            : {};
+
+    const fields = [
+
+        field("name", "Name", "text", customer.name || "", {
+            required: true,
+        }),
+
+        field("phone", "Phone", "tel", customer.phone || ""),
+
+        field("email", "Email", "email", customer.email || ""),
+
+        field("address", "Address", "text", customer.address || ""),
+
+        field("notes", "Notes", "textarea", customer.notes || "", {
+            wide: true,
+        }),
+
+    ];
+
+    // 4. Onyesha Customers
+    view.innerHTML = `${editor(
+        store.editing ? "Edit customer" : "Add customer",
+        fields,
+        store.editing ? "Update customer" : "Add customer"
+    )}
+
+    ${tablePanel(
+        "Customer directory",
+
+        ["Name", "Phone", "Email", "Address"],
+
+        store.customers.map((item) => [
+
+            escapeHtml(item.name),
+
+            escapeHtml(item.phone || "—"),
+
+            escapeHtml(item.email || "—"),
+
+            escapeHtml(item.address || "—"),
+
+        ]),
+
+        "No customers yet.",
+
+        [
+            (row, index) =>
+                actionButton(
+                    "edit-customer",
+                    store.customers[index]?.id,
+                    "Edit"
+                ),
+
+            (row, index) =>
+                actionButton(
+                    "delete-customer",
+                    store.customers[index]?.id,
+                    "Delete",
+                    true
+                ),
+        ],
+
+    )}`;
 }
 
 async function renderReports() {
@@ -1269,41 +1944,269 @@ async function handleFormSubmit(event) {
   try {
     const type = form.dataset.form;
     if (type === "record") {
-      const payload = payloadFor(form);
-      await attachUploads(form, payload);
-      if (store.section === "products") {
-        if (store.editing) await api.updateProduct(store.editing.id, payload);
-        else await api.createProduct(payload);
-      } else if (store.section === "customers") {
-        if (store.editing) await api.updateCustomer(store.editing.id, payload);
-        else await api.createCustomer(payload);
-      } else if (store.section === "expenses") {
-        if (store.editing) await api.updateExpense(store.editing.id, payload);
-        else await api.createExpense(payload);
-      } else if (store.section === "business") {
-        store.business = await api.saveBusiness(
-          payload,
-          Boolean(store.business?.id),
+    const payload = payloadFor(form);
+    if (store.section === "expenses" && !navigator.onLine) {
+        const existing = store.editing?.record;
+        const offlineId =
+          existing?.offline_id ||
+          (existing?.id ? `server-${existing.id}` : crypto.randomUUID());
+        const now = new Date().toISOString();
+        const expense = {
+          ...existing,
+          ...payload,
+          id: existing?.id ?? -Date.now(),
+          offline_id: offlineId,
+          created_at: existing?.created_at || now,
+          updated_at: now,
+          offline: true,
+          sync_status: "pending",
+        };
+        const queue = await getAllOfflineData("sync_queue");
+        const queuedJob = queue.find(
+          (job) =>
+            job.entity === "expense" && job.offline_id === offlineId,
         );
+        const operation =
+          queuedJob?.operation === "create" ||
+          (!existing && !queuedJob)
+            ? "create"
+            : "update";
+
+        await saveOfflineData("expenses", expense);
+        await saveOfflineData("sync_queue", {
+          ...(queuedJob || {}),
+          entity: "expense",
+          operation,
+          local_id: operation === "create" ? offlineId : expense.id,
+          offline_id: offlineId,
+          payload: expense,
+          created_at: queuedJob?.created_at || now,
+          status: "pending",
+        });
+
+        store.editing = null;
+        toast(
+          existing
+            ? "Expense updated offline. Waiting for internet."
+            : "Expense saved offline. Waiting for internet.",
+        );
+        await navigate("expenses");
+        return;
       }
-      store.editing = null;
-      toast("Changes saved.");
-      await navigate(store.section);
+
+    // Hifadhi bidhaa bila internet
+    // Hifadhi Products na Customers bila internet
+if (
+    ["products", "customers"].includes(store.section) &&
+    !navigator.onLine
+) {
+    const entity = store.section === "products" ? "product" : "customer";
+    const storageName = store.section;
+    const isEditing = Boolean(store.editing);
+
+    // Tengeneza ID ya muda
+    const localId = isEditing
+        ? store.editing.id
+        : -Date.now();
+
+    const offlineRecord = {
+        ...payload,
+        id: localId,
+        offline: true,
+        updated_at: new Date().toISOString()
+    };
+
+    // Hifadhi kwenye IndexedDB
+    await saveOfflineData(storageName, offlineRecord);
+
+    // Weka kwenye foleni ya kusawazisha
+    await saveOfflineData("sync_queue", {
+        entity,
+        operation: isEditing ? "update" : "create",
+        local_id: localId,
+        payload: offlineRecord,
+        created_at: new Date().toISOString(),
+        status: "pending"
+    });
+
+    store.editing = null;
+
+    toast(
+        isEditing
+            ? `${entity} updated offline. Waiting for internet.`
+            : `${entity} saved offline. Waiting for internet.`
+    );
+
+    await navigate(store.section);
+    return;
+}
+
+    // Mfumo wa kawaida ukiwa na internet
+    await attachUploads(form, payload);
+
+    if (store.section === "products") {
+        if (store.editing)
+            await api.updateProduct(store.editing.id, payload);
+        else
+            await api.createProduct(payload);
+
+    } else if (store.section === "customers") {
+        if (store.editing)
+            await api.updateCustomer(store.editing.id, payload);
+        else
+            await api.createCustomer(payload);
+
+    } else if (store.section === "expenses") {
+        if (store.editing)
+            await api.updateExpense(store.editing.id, payload);
+        else
+            await api.createExpense(payload);
+
+    } else if (store.section === "business") {
+        store.business = await api.saveBusiness(
+            payload,
+            Boolean(store.business?.id)
+        );
+    }
+
+    store.editing = null;
+
+    toast("Changes saved.");
+
+    await navigate(store.section);
     } else if (type === "sale") {
-      const data = formObject(form);
-      const customerId = data.customer_id ? Number(data.customer_id) : null;
-      const items = [...form.querySelectorAll(".sale-line")].map((line) => ({
-        product_id: Number(line.querySelector('[name="product_id"]').value),
-        quantity: 1,
-      }));
-      await api.createSale({
+    const data = formObject(form);
+
+    const customerId = data.customer_id
+        ? Number(data.customer_id)
+        : null;
+
+    // Kusoma bidhaa na quantity kutoka kwenye form
+    const items = [...form.querySelectorAll(".sale-line")].map((line) => ({
+        product_id: Number(
+            line.querySelector('[name="product_id"]').value
+        ),
+        quantity: Number(
+            line.querySelector('[name="quantity"]').value
+        ),
+    }));
+
+    // Hakikisha bidhaa zimechaguliwa
+    if (
+        items.some(item =>
+            !item.product_id ||
+            !Number.isInteger(item.quantity) ||
+            item.quantity <= 0
+        )
+    ) {
+        throw new Error("Please select products and enter valid quantities.");
+    }
+
+    // Tengeneza ID ya kipekee ya mauzo
+    const offlineId = crypto.randomUUID();
+
+    // Jumlisha quantity za bidhaa zinazojirudia
+    const requiredStock = {};
+
+    items.forEach(item => {
+        requiredStock[item.product_id] =
+            (requiredStock[item.product_id] || 0) + item.quantity;
+    });
+
+    // Tafuta bidhaa kwenye local database
+    const localProducts = await getAllOfflineData("products");
+
+    let totalAmount = 0;
+    let totalCost = 0;
+
+    // Hakikisha stock inatosha
+    for (const [productId, quantity] of Object.entries(requiredStock)) {
+        const product = localProducts.find(
+            item => Number(item.id) === Number(productId)
+        );
+
+        if (!product) {
+            throw new Error(
+                "Product is not available in offline storage. Connect to internet and reload products."
+            );
+        }
+
+        if (Number(product.stock_quantity) < quantity) {
+            throw new Error(
+                `Insufficient stock for ${product.name}. Available: ${product.stock_quantity}`
+            );
+        }
+    }
+
+    // Hesabu mauzo na gharama
+    for (const item of items) {
+        const product = localProducts.find(
+            p => Number(p.id) === item.product_id
+        );
+
+        totalAmount +=
+            Number(product.selling_price || 0) * item.quantity;
+
+        totalCost +=
+            Number(product.buying_price || 0) * item.quantity;
+    }
+
+    const salePayload = {
+        offline_id: offlineId,
         customer_id: customerId,
         payment_method: data.payment_method,
         notes: data.notes || null,
         items,
-      });
-      toast("Sale recorded and stock updated.");
-      await navigate("sales");
+    };
+
+    // KAMA INTERNET IPO
+    if (navigator.onLine) {
+        await api.createSale(salePayload);
+
+        toast("Sale recorded and stock updated.");
+
+    } else {
+        // KAMA INTERNET HAIPO
+
+        const sale = {
+            ...salePayload,
+            total_amount: totalAmount,
+            total_cost: totalCost,
+            profit: totalAmount - totalCost,
+            offline_created_at: new Date().toISOString(),
+            offline: true,
+            sync_status: "pending",
+        };
+
+        // Hifadhi mauzo kwenye IndexedDB
+        await saveOfflineData("sales", sale);
+
+        // Weka mauzo kwenye foleni ya synchronization
+        await addToSyncQueue({
+            entity: "sale",
+            operation: "create",
+            local_id: offlineId,
+            offline_id: offlineId,
+            payload: sale,
+        });
+
+        // Punguza stock kwenye local database
+        for (const [productId, quantity] of Object.entries(requiredStock)) {
+            const product = localProducts.find(
+                p => Number(p.id) === Number(productId)
+            );
+
+            await saveOfflineData("products", {
+                ...product,
+                stock_quantity:
+                    Number(product.stock_quantity) - quantity,
+            });
+        }
+
+        toast("Sale saved offline. Waiting for internet.");
+    }
+
+    await navigate("sales");
     } else if (type === "subscription-payment") {
       const data = formObject(form);
       const result = await api.submitSubscriptionPayment({
@@ -1324,6 +2227,7 @@ async function handleFormSubmit(event) {
     setBusy(button, false);
   }
 }
+
 
 async function handleViewClick(event) {
   const navButton = event.target.closest("[data-nav]");
@@ -1403,8 +2307,48 @@ async function handleViewClick(event) {
       "delete-expense": () => api.deleteExpense(id),
     }[action];
     if (remove && confirm("Delete this item? This cannot be undone.")) {
-      await remove();
-      toast("Item deleted.");
+      if (action === "delete-expense" && !navigator.onLine) {
+        const expense = store.expenses.find(
+          (item) => Number(item.id) === Number(id),
+        );
+        if (!expense) return;
+
+        const queue = await getAllOfflineData("sync_queue");
+        const matchingJobs = queue.filter(
+          (job) =>
+            job.entity === "expense" &&
+            job.offline_id === expense.offline_id,
+        );
+        for (const job of matchingJobs) {
+          await deleteOfflineData("sync_queue", job.id);
+        }
+        await deleteOfflineData("expenses", expense.offline_id);
+
+        if (Number(expense.id) >= 0) {
+          await saveOfflineData("sync_queue", {
+            entity: "expense",
+            operation: "delete",
+            local_id: expense.id,
+            offline_id: expense.offline_id,
+            payload: expense,
+            created_at: new Date().toISOString(),
+            status: "pending",
+          });
+        }
+
+        toast("Expense deleted offline. Waiting for internet.");
+      } else {
+        await remove();
+        if (action === "delete-expense") {
+          const expense = store.expenses.find(
+            (item) => Number(item.id) === Number(id),
+          );
+          if (expense?.offline_id) {
+            await deleteOfflineData("expenses", expense.offline_id);
+          }
+        }
+        toast("Item deleted.");
+      }
       await navigate(store.section);
     }
   } catch (error) {
@@ -1647,6 +2591,24 @@ view.addEventListener("change", (event) => {
     const charts = $("monthlyTrendCharts");
     if (!month || !charts) return;
     charts.innerHTML = `<p class="loading-state">${escapeHtml(translate("Loading…"))}</p>`;
+    const showSavedTrend = () => {
+      const cached = store.dashboardCache || {
+        sales: [],
+        expenses: [],
+      };
+      const activity = $("monthlyActivity");
+      if (activity)
+        activity.outerHTML = monthlyActivityChart(
+          offlineMonthlyTrend(cached.sales, cached.expenses, month),
+          month,
+        );
+    };
+    if (!navigator.onLine || store.dashboardOffline) {
+      store.dashboardOffline = true;
+      $("apiIndicator").textContent = "Offline";
+      showSavedTrend();
+      return;
+    }
     api
       .monthlyTrend(month)
       .then((days) => {
@@ -1654,6 +2616,13 @@ view.addEventListener("change", (event) => {
         if (activity) activity.outerHTML = monthlyActivityChart(days, month);
       })
       .catch((error) => {
+        if (isNetworkUnavailable(error)) {
+          store.dashboardOffline = true;
+          $("apiIndicator").textContent = "Offline";
+          showSavedTrend();
+          applyLanguage(document.body);
+          return;
+        }
         charts.innerHTML = `<p class="empty-inline">${escapeHtml(error.message)}</p>`;
         toast(error.message, true);
       });
@@ -1669,6 +2638,9 @@ view.addEventListener("change", (event) => {
 });
 $("logoutBtn").addEventListener("click", () => {
   api.setToken("");
+  deleteOfflineData("app_data", "session-user").catch((error) =>
+    console.warn("Could not clear the cached user profile:", error),
+  );
   store.user = null;
   store.business = null;
   showAuth();

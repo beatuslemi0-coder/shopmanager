@@ -1,15 +1,20 @@
+// ============================================================
+// SHOPMANAGER OFFLINE DATABASE + AUTOMATIC SYNC
+// ============================================================
 
-// SHOPMANAGER OFFLINE DATABASE
 const DB_NAME = "SHOPMANAGER_OFFLINE";
 const DB_VERSION = 1;
 
 let dbInstance = null;
+let productSyncRunning = false;
 
-// 1. KUFUNGUA DATABASE YA KIFAA
+
+// ============================================================
+// 1. KUFUNGUA DATABASE
+// ============================================================
 
 function openOfflineDB() {
 
-    // Kama database tayari imefunguliwa, itumie
     if (dbInstance) {
         return Promise.resolve(dbInstance);
     }
@@ -18,40 +23,34 @@ function openOfflineDB() {
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        // Kutengeneza database na stores zake
         request.onupgradeneeded = (event) => {
 
             const db = event.target.result;
 
-            // Products
             if (!db.objectStoreNames.contains("products")) {
                 db.createObjectStore("products", {
                     keyPath: "id"
                 });
             }
 
-            // Customers
             if (!db.objectStoreNames.contains("customers")) {
                 db.createObjectStore("customers", {
                     keyPath: "id"
                 });
             }
 
-            // Sales
             if (!db.objectStoreNames.contains("sales")) {
                 db.createObjectStore("sales", {
                     keyPath: "offline_id"
                 });
             }
 
-            // Expenses
             if (!db.objectStoreNames.contains("expenses")) {
                 db.createObjectStore("expenses", {
                     keyPath: "offline_id"
                 });
             }
 
-            // Sync Queue
             if (!db.objectStoreNames.contains("sync_queue")) {
                 db.createObjectStore("sync_queue", {
                     keyPath: "id",
@@ -59,7 +58,6 @@ function openOfflineDB() {
                 });
             }
 
-            // General App Data
             if (!db.objectStoreNames.contains("app_data")) {
                 db.createObjectStore("app_data", {
                     keyPath: "key"
@@ -69,12 +67,10 @@ function openOfflineDB() {
             console.log("SHOPMANAGER Offline Database created!");
         };
 
-        // Database ikifunguka
         request.onsuccess = (event) => {
 
             dbInstance = event.target.result;
 
-            // Kufunga connection kama database version itabadilika
             dbInstance.onversionchange = () => {
                 dbInstance.close();
                 dbInstance = null;
@@ -85,23 +81,21 @@ function openOfflineDB() {
             resolve(dbInstance);
         };
 
-        // Database ikishindwa kufunguka
         request.onerror = () => {
-
-            console.error("IndexedDB Error:", request.error);
-
             reject(request.error);
         };
 
         request.onblocked = () => {
-
             console.warn("Database upgrade is blocked.");
         };
 
     });
 }
 
-// 2. KUHIFADHI TAARIFA KWENYE INDEXEDDB
+
+// ============================================================
+// 2. KUHIFADHI TAARIFA
+// ============================================================
 
 async function saveOfflineData(storeName, data) {
 
@@ -109,35 +103,25 @@ async function saveOfflineData(storeName, data) {
 
     return new Promise((resolve, reject) => {
 
-        try {
+        const transaction = db.transaction(storeName, "readwrite");
 
-            const transaction = db.transaction(storeName, "readwrite");
+        const request = transaction.objectStore(storeName).put(data);
 
-            const store = transaction.objectStore(storeName);
+        request.onsuccess = () => resolve(request.result);
 
-            const request = store.put(data);
+        request.onerror = () => reject(request.error);
 
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
+        transaction.onerror = () => reject(transaction.error);
 
-            request.onerror = () => {
-                reject(request.error);
-            };
-
-            transaction.onerror = () => {
-                reject(transaction.error);
-            };
-
-        } catch (error) {
-
-            reject(error);
-        }
+        transaction.onabort = () => reject(transaction.error);
 
     });
 }
 
+
+// ============================================================
 // 3. KUSOMA TAARIFA ZOTE
+// ============================================================
 
 async function getAllOfflineData(storeName) {
 
@@ -145,31 +129,21 @@ async function getAllOfflineData(storeName) {
 
     return new Promise((resolve, reject) => {
 
-        try {
+        const transaction = db.transaction(storeName, "readonly");
 
-            const transaction = db.transaction(storeName, "readonly");
+        const request = transaction.objectStore(storeName).getAll();
 
-            const store = transaction.objectStore(storeName);
+        request.onsuccess = () => resolve(request.result);
 
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-
-            request.onerror = () => {
-                reject(request.error);
-            };
-
-        } catch (error) {
-
-            reject(error);
-        }
+        request.onerror = () => reject(request.error);
 
     });
 }
 
-// 4. KUSOMA TAARIFA MOJA KWA ID
+
+// ============================================================
+// 4. KUSOMA TAARIFA MOJA
+// ============================================================
 
 async function getOfflineData(storeName, id) {
 
@@ -177,31 +151,21 @@ async function getOfflineData(storeName, id) {
 
     return new Promise((resolve, reject) => {
 
-        try {
+        const transaction = db.transaction(storeName, "readonly");
 
-            const transaction = db.transaction(storeName, "readonly");
+        const request = transaction.objectStore(storeName).get(id);
 
-            const store = transaction.objectStore(storeName);
+        request.onsuccess = () => resolve(request.result);
 
-            const request = store.get(id);
-
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-
-            request.onerror = () => {
-                reject(request.error);
-            };
-
-        } catch (error) {
-
-            reject(error);
-        }
+        request.onerror = () => reject(request.error);
 
     });
 }
 
+
+// ============================================================
 // 5. KUFUTA TAARIFA
+// ============================================================
 
 async function deleteOfflineData(storeName, id) {
 
@@ -209,30 +173,23 @@ async function deleteOfflineData(storeName, id) {
 
     return new Promise((resolve, reject) => {
 
-        try {
+        const transaction = db.transaction(storeName, "readwrite");
 
-            const transaction = db.transaction(storeName, "readwrite");
+        const request = transaction.objectStore(storeName).delete(id);
 
-            const store = transaction.objectStore(storeName);
+        request.onsuccess = () => resolve(true);
 
-            const request = store.delete(id);
+        request.onerror = () => reject(request.error);
 
-            request.onsuccess = () => {
-                resolve(true);
-            };
-
-            request.onerror = () => {
-                reject(request.error);
-            };
-
-        } catch (error) {
-
-            reject(error);
-        }
+        transaction.onerror = () => reject(transaction.error);
 
     });
 }
-// 6. KUHIFADHI BIDHAA NYINGI
+
+
+// ============================================================
+// 6. KUHIFADHI TAARIFA NYINGI
+// ============================================================
 
 async function saveMultipleOfflineData(storeName, items) {
 
@@ -240,108 +197,893 @@ async function saveMultipleOfflineData(storeName, items) {
 
     return new Promise((resolve, reject) => {
 
-        try {
+        const transaction = db.transaction(storeName, "readwrite");
 
-            const transaction = db.transaction(storeName, "readwrite");
+        const store = transaction.objectStore(storeName);
 
-            const store = transaction.objectStore(storeName);
+        items.forEach((item) => {
+            store.put(item);
+        });
 
-            items.forEach((item) => {
-                store.put(item);
-            });
+        transaction.oncomplete = () => resolve(items.length);
 
-            transaction.oncomplete = () => {
-                resolve(items.length);
-            };
+        transaction.onerror = () => reject(transaction.error);
 
-            transaction.onerror = () => {
-                reject(transaction.error);
-            };
-
-            transaction.onabort = () => {
-                reject(transaction.error);
-            };
-
-        } catch (error) {
-
-            reject(error);
-        }
+        transaction.onabort = () => reject(transaction.error);
 
     });
 }
 
-// 7. KUSAWAZISHA BIDHAA KUTOKA FASTAPI KWENDA INDEXEDDB
 
-async function syncProductsToLocal() {
+// ============================================================
+// 7. KUONGEZA KAZI KWENYE SYNC QUEUE
+// ============================================================
+
+async function addToSyncQueue(item) {
+
+    const db = await openOfflineDB();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction = db.transaction("sync_queue", "readwrite");
+
+        const request = transaction.objectStore("sync_queue").add({
+            ...item,
+            status: "pending",
+            created_at: item.created_at || new Date().toISOString()
+        });
+
+        request.onsuccess = () => resolve(request.result);
+
+        request.onerror = () => reject(request.error);
+
+    });
+}
+
+
+// ============================================================
+// 8. KUSAFISHA PAYLOAD ZA PRODUCTS NA CUSTOMERS
+// ============================================================
+
+function cleanOfflinePayload(data) {
+
+    const payload = { ...data };
+
+    delete payload.id;
+    delete payload.offline;
+    delete payload.updated_at;
+    delete payload.offline_id;
+
+    return payload;
+}
+
+
+function cleanProductPayload(product) {
+
+    return cleanOfflinePayload(product);
+
+}
+
+
+// ============================================================
+// 9. KUSAFISHA PAYLOAD ZA SALES
+// ============================================================
+
+function cleanSalePayload(sale) {
+
+    const payload = { ...sale };
+
+    delete payload.id;
+    delete payload.offline;
+    delete payload.sync_status;
+    delete payload.offline_created_at;
+
+    // Muhimu:
+    // Hatuondoi offline_id.
+    // Backend inaitumia kuzuia duplicate sales.
+
+    return payload;
+
+}
+
+
+// ============================================================
+// 10. KUPATA RECORD KUTOKA API RESPONSE
+// ============================================================
+
+function getCreatedProductFromResponse(response) {
+
+    if (response?.id !== undefined) {
+        return response;
+    }
+
+    if (response?.data?.id !== undefined) {
+        return response.data;
+    }
+
+    if (response?.product?.id !== undefined) {
+        return response.product;
+    }
+
+    if (response?.sale?.id !== undefined) {
+        return response.sale;
+    }
+
+    if (response?.expense?.id !== undefined) {
+        return response.expense;
+    }
+
+    return null;
+
+}
+
+
+// ============================================================
+// 11. KUBADILISHA TEMPORARY IDs KWENYE SALES
+// ============================================================
+
+async function updatePendingSaleReferences(entity, localId, realId) {
+
+    const queueItems = await getAllOfflineData("sync_queue");
+
+    for (const job of queueItems) {
+
+        if (job.entity !== "sale" || !job.payload) {
+            continue;
+        }
+
+        let updated = false;
+
+        const payload = { ...job.payload };
+
+        // Badilisha customer ID
+        if (
+            entity === "customer" &&
+            Number(payload.customer_id) === Number(localId)
+        ) {
+
+            payload.customer_id = realId;
+            updated = true;
+
+        }
+
+        // Badilisha product IDs ndani ya sale items
+        if (entity === "product" && Array.isArray(payload.items)) {
+
+            payload.items = payload.items.map(item => {
+
+                if (Number(item.product_id) === Number(localId)) {
+
+                    updated = true;
+
+                    return {
+                        ...item,
+                        product_id: realId
+                    };
+
+                }
+
+                return item;
+
+            });
+
+        }
+
+        if (updated) {
+
+            await saveOfflineData("sync_queue", {
+                ...job,
+                payload
+            });
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// 12. SYNCHRONIZATION YA PRODUCTS NA CUSTOMERS
+// ============================================================
+
+async function syncPendingProductsAndCustomers() {
+
+    const queueItems = await getAllOfflineData("sync_queue");
+
+    const pendingItems = queueItems
+        .filter(item =>
+            ["product", "customer"].includes(item.entity) &&
+            item.status !== "failed"
+        )
+        .sort((a, b) => {
+
+            const order = {
+                product: 1,
+                customer: 2
+            };
+
+            return order[a.entity] - order[b.entity];
+
+        });
+
+    let syncedCount = 0;
+
+    for (const job of pendingItems) {
+
+        if (!navigator.onLine) {
+            break;
+        }
+
+        try {
+
+            const entity = job.entity;
+
+            const storageName = entity === "product"
+                ? "products"
+                : "customers";
+
+            const createFunction = entity === "product"
+                ? api.createProduct.bind(api)
+                : api.createCustomer.bind(api);
+
+            const updateFunction = entity === "product"
+                ? api.updateProduct.bind(api)
+                : api.updateCustomer.bind(api);
+
+            const getFunction = entity === "product"
+                ? api.product?.bind(api)
+                : null;
+
+            const payload = cleanOfflinePayload(job.payload || {});
+
+            if (job.operation === "create") {
+
+                const response = await createFunction(payload);
+
+                const serverRecord =
+                    getCreatedProductFromResponse(response);
+
+                if (!serverRecord || serverRecord.id === undefined) {
+
+                    throw new Error(
+                        `${entity} API response haina ID halisi.`
+                    );
+
+                }
+
+                const realId = serverRecord.id;
+
+                const localRecord = await getOfflineData(
+                    storageName,
+                    job.local_id
+                );
+
+                await saveOfflineData(storageName, {
+                    ...(localRecord || {}),
+                    ...serverRecord,
+                    id: realId,
+                    offline: false
+                });
+
+                if (job.local_id !== realId) {
+
+                    await updatePendingSaleReferences(
+                        entity,
+                        job.local_id,
+                        realId
+                    );
+
+                    await deleteOfflineData(
+                        storageName,
+                        job.local_id
+                    );
+
+                }
+
+            } else if (job.operation === "update") {
+
+                const response = await updateFunction(
+                    job.local_id,
+                    {
+                        ...job.payload,
+                        id: undefined
+                    }
+                );
+
+                let updatedRecord =
+                    getCreatedProductFromResponse(response);
+
+                if (!updatedRecord && getFunction) {
+
+                    updatedRecord = await getFunction(job.local_id);
+
+                }
+
+                const localRecord = await getOfflineData(
+                    storageName,
+                    job.local_id
+                );
+
+                await saveOfflineData(storageName, {
+                    ...(localRecord || {}),
+                    ...(updatedRecord || {}),
+                    id: job.local_id,
+                    offline: false
+                });
+
+            } else {
+
+                console.warn(
+                    "Unknown sync operation:",
+                    job.operation
+                );
+
+                continue;
+
+            }
+
+            await deleteOfflineData("sync_queue", job.id);
+
+            syncedCount++;
+
+            console.log(
+                `${entity} synchronized successfully:`,
+                job.local_id
+            );
+
+        } catch (error) {
+
+            console.error(
+                `${job.entity} synchronization failed:`,
+                error
+            );
+
+        }
+
+    }
+
+    return syncedCount;
+
+}
+
+
+// ============================================================
+// 13. SYNCHRONIZATION YA OFFLINE EXPENSES
+// ============================================================
+
+function cleanExpensePayload(expense, includeOfflineId = false) {
+
+    const payload = { ...expense };
+
+    delete payload.id;
+    if (!includeOfflineId) {
+        delete payload.offline_id;
+    }
+    delete payload.offline;
+    delete payload.sync_status;
+    delete payload.created_at;
+    delete payload.updated_at;
+
+    return payload;
+
+}
+
+
+async function syncPendingExpenses() {
+
+    const queueItems = await getAllOfflineData("sync_queue");
+    const pendingExpenses = queueItems
+        .filter(item =>
+            item.entity === "expense" &&
+            item.status !== "failed"
+        )
+        .sort((a, b) => a.id - b.id);
+
+    let syncedCount = 0;
+
+    for (const job of pendingExpenses) {
+
+        if (!navigator.onLine) {
+            break;
+        }
+
+        try {
+
+            const offlineId =
+                job.offline_id || job.payload?.offline_id;
+
+            if (!offlineId) {
+                throw new Error("Expense haina offline_id.");
+            }
+
+            if (job.operation === "create") {
+
+                const response = await api.createExpense(
+                    cleanExpensePayload(job.payload || {}, true)
+                );
+                const serverExpense =
+                    getCreatedProductFromResponse(response);
+
+                if (!serverExpense || serverExpense.id === undefined) {
+                    throw new Error(
+                        "Expense API response haijarudisha ID halisi."
+                    );
+                }
+
+                const localExpense = await getOfflineData(
+                    "expenses",
+                    offlineId
+                );
+
+                await saveOfflineData("expenses", {
+                    ...(localExpense || {}),
+                    ...serverExpense,
+                    offline_id: offlineId,
+                    offline: false,
+                    sync_status: "synced"
+                });
+
+            } else if (job.operation === "update") {
+
+                const response = await api.updateExpense(
+                    job.local_id,
+                    cleanExpensePayload(job.payload || {})
+                );
+                const serverExpense =
+                    getCreatedProductFromResponse(response);
+                const localExpense = await getOfflineData(
+                    "expenses",
+                    offlineId
+                );
+
+                await saveOfflineData("expenses", {
+                    ...(localExpense || {}),
+                    ...(serverExpense || {}),
+                    id: job.local_id,
+                    offline_id: offlineId,
+                    offline: false,
+                    sync_status: "synced"
+                });
+
+            } else if (job.operation === "delete") {
+
+                await api.deleteExpense(job.local_id);
+                await deleteOfflineData("expenses", offlineId);
+
+            } else {
+
+                throw new Error(
+                    `Unknown expense sync operation: ${job.operation}`
+                );
+
+            }
+
+            await deleteOfflineData("sync_queue", job.id);
+            syncedCount++;
+
+            console.log(
+                "Expense synchronized successfully:",
+                job.local_id
+            );
+
+        } catch (error) {
+
+            console.error("Expense synchronization failed:", error);
+
+        }
+
+    }
+
+    return syncedCount;
+
+}
+
+
+// ============================================================
+// 14. SYNCHRONIZATION YA OFFLINE SALES
+// ============================================================
+
+async function syncPendingSales() {
+
+    const queueItems = await getAllOfflineData("sync_queue");
+
+    // Kama product au customer bado hazijasawazishwa,
+    // sales zitasubiri kwanza.
+
+    const pendingDependencies = queueItems.filter(job =>
+        ["product", "customer"].includes(job.entity)
+    );
+
+    if (pendingDependencies.length > 0) {
+
+        console.log(
+            "Sales zinasubiri Products/Customers kusawazishwa."
+        );
+
+        return 0;
+
+    }
+
+    const pendingSales = queueItems.filter(job =>
+        job.entity === "sale" &&
+        job.operation === "create" &&
+        job.status !== "failed"
+    );
+
+    let syncedCount = 0;
+
+    for (const job of pendingSales) {
+
+        if (!navigator.onLine) {
+            break;
+        }
+
+        try {
+
+            const payload = cleanSalePayload(job.payload || {});
+
+            const offlineId = job.offline_id || payload.offline_id;
+
+            if (!offlineId) {
+
+                throw new Error(
+                    "Sale haina offline_id. Haiwezi kusawazishwa."
+                );
+
+            }
+
+            if (!Array.isArray(payload.items) || !payload.items.length) {
+
+                throw new Error(
+                    "Sale haina bidhaa (items)."
+                );
+
+            }
+
+            // Tuma sale kwenda backend
+            const response = await api.createSale(payload);
+
+            const serverSale =
+                getCreatedProductFromResponse(response);
+
+            if (!serverSale) {
+
+                throw new Error(
+                    "Sale API response haijarudisha taarifa za sale."
+                );
+
+            }
+
+            // Soma sale ya awali kwenye IndexedDB
+            const localSale = await getOfflineData(
+                "sales",
+                offlineId
+            );
+
+            // Hifadhi sale iliyosawazishwa
+            await saveOfflineData("sales", {
+
+                ...(localSale || {}),
+                ...serverSale,
+
+                // Hifadhi offline_id kwa sababu ni keyPath
+                offline_id: offlineId,
+
+                offline: false,
+                sync_status: "synced"
+
+            });
+
+            // Ondoa kazi iliyofanikiwa kwenye queue
+            await deleteOfflineData(
+                "sync_queue",
+                job.id
+            );
+
+            syncedCount++;
+
+            console.log(
+                "Sale synchronized successfully:",
+                offlineId
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Sale synchronization failed:",
+                error
+            );
+
+            // Usifute job.
+            // Itajaribiwa tena mtandao ukiwa tayari.
+
+        }
+
+    }
+
+    return syncedCount;
+
+}
+
+
+// ============================================================
+// 14. FUNCTION KUU YA AUTOMATIC SYNCHRONIZATION
+// ============================================================
+
+async function syncPendingData() {
+
+    if (productSyncRunning) {
+        return;
+    }
+
+    if (!navigator.onLine) {
+
+        console.log("SHOPMANAGER is offline.");
+
+        return;
+
+    }
+
+    if (
+        typeof api === "undefined" ||
+        typeof api.createProduct !== "function" ||
+        typeof api.createCustomer !== "function" ||
+        typeof api.createSale !== "function" ||
+        typeof api.createExpense !== "function" ||
+        typeof api.updateExpense !== "function" ||
+        typeof api.deleteExpense !== "function"
+    ) {
+
+        console.warn("API haijawa tayari.");
+
+        return;
+
+    }
+
+    if (!localStorage.getItem("shopmanager_token")) {
+
+        console.log(
+            "Ingia kwenye akaunti kabla ya synchronization."
+        );
+
+        return;
+
+    }
+
+    productSyncRunning = true;
 
     try {
 
-        // Angalia kama internet ipo
-        if (!navigator.onLine) {
+        let totalSynced = 0;
 
-            console.log("Offline: Using locally saved products.");
+        // Hatua ya kwanza: Products na Customers
+        const productsCustomersSynced =
+            await syncPendingProductsAndCustomers();
 
-            return await getAllOfflineData("products");
+        totalSynced += productsCustomersSynced;
+
+        // Hatua ya pili: Expenses
+        if (navigator.onLine) {
+
+            const expensesSynced = await syncPendingExpenses();
+
+            totalSynced += expensesSynced;
+
         }
 
-        // Hakikisha API ipo
-        if (typeof api === "undefined" ||
-            typeof api.products !== "function") {
+        // Hatua ya tatu: Sales
+        if (navigator.onLine) {
 
-            throw new Error("Products API function is not available.");
+            const salesSynced = await syncPendingSales();
+
+            totalSynced += salesSynced;
+
         }
-
-        // Pata bidhaa kutoka FastAPI
-        const response = await api.products();
-
-        // Hakikisha response ni array ya bidhaa
-        const products = Array.isArray(response)
-            ? response
-            : response?.data;
-
-        if (!Array.isArray(products)) {
-
-            throw new Error("Invalid products response from API.");
-        }
-
-        // Hifadhi bidhaa zote kwenye IndexedDB
-        await saveMultipleOfflineData("products", products);
 
         console.log(
-            `${products.length} products saved locally successfully!`
+            `Total synchronized items: ${totalSynced}`
         );
 
-        return products;
+        if (totalSynced > 0) {
+
+            window.dispatchEvent(
+                new CustomEvent("shopmanager:sync-complete", {
+
+                    detail: {
+                        syncedCount: totalSynced
+                    }
+
+                })
+            );
+
+        }
 
     } catch (error) {
 
-        console.error("Product synchronization failed:", error);
+        console.error(
+            "SHOPMANAGER synchronization error:",
+            error
+        );
 
-        // Kama API imeshindwa, jaribu kutumia bidhaa zilizopo local
-        if (!navigator.onLine) {
+    } finally {
 
-            return await getAllOfflineData("products");
-        }
+        productSyncRunning = false;
 
-        throw error;
     }
+
 }
 
-// 8. KUHESABU TAARIFA ZINAZOSUBIRI
+
+// ============================================================
+// 15. KUSAWAZISHA BIDHAA ZA SERVER NA LOCAL
+// ============================================================
+
+async function syncProductsToLocal() {
+
+    if (!navigator.onLine) {
+
+        console.log("Offline: Using local products.");
+
+        return await getAllOfflineData("products");
+
+    }
+
+    try {
+
+        const response = await api.products();
+
+        const serverProducts = Array.isArray(response)
+            ? response
+            : response?.data;
+
+        if (!Array.isArray(serverProducts)) {
+
+            throw new Error(
+                "Invalid products response."
+            );
+
+        }
+
+        const localProducts =
+            await getAllOfflineData("products");
+
+        const pendingQueue =
+            await getAllOfflineData("sync_queue");
+
+        const pendingLocalIds = new Set(
+
+            pendingQueue
+                .filter(item => item.entity === "product")
+                .map(item => item.local_id)
+
+        );
+
+        const serverIds = new Set(
+            serverProducts.map(product => product.id)
+        );
+
+        await saveMultipleOfflineData(
+            "products",
+            serverProducts
+        );
+
+        // Linda bidhaa ambazo bado hazijatumwa server.
+        const productsToPreserve = localProducts.filter(
+            product =>
+                pendingLocalIds.has(product.id) &&
+                !serverIds.has(product.id)
+        );
+
+        if (productsToPreserve.length) {
+
+            await saveMultipleOfflineData(
+                "products",
+                productsToPreserve
+            );
+
+        }
+
+        return [
+            ...serverProducts,
+            ...productsToPreserve
+        ];
+
+    } catch (error) {
+
+        console.error(
+            "Product sync failed:",
+            error
+        );
+
+        return await getAllOfflineData("products");
+
+    }
+
+}
+
+
+// ============================================================
+// 16. KUHESABU KAZI ZINAZOSUBIRI
+// ============================================================
 
 async function getPendingSyncCount() {
 
-    const pendingItems = await getAllOfflineData("sync_queue");
+    const pendingItems =
+        await getAllOfflineData("sync_queue");
 
     return pendingItems.length;
+
 }
 
-// 9. KUANGALIA HALI YA INTERNET
+
+// ============================================================
+// 17. KUANGALIA INTERNET
+// ============================================================
 
 function isDeviceOnline() {
 
     return navigator.onLine;
-}
-// SHOPMANAGER OFFLINE DATABASE READY
 
-console.log("SHOPMANAGER Offline Database module loaded!");
+}
+
+
+// ============================================================
+// 18. KUANZISHA AUTOMATIC SYNC
+// ============================================================
+
+function startAutomaticSync() {
+
+    window.addEventListener("online", () => {
+
+        console.log(
+            "Internet imerudi. Synchronization inaanza..."
+        );
+
+        syncPendingData();
+
+    });
+
+    // Jaribu pia kama ukurasa umefunguliwa online.
+    window.setTimeout(() => {
+
+        if (navigator.onLine) {
+
+            syncPendingData();
+
+        }
+
+    }, 2500);
+
+}
+
+
+// ============================================================
+// 19. KUANZISHA DATABASE
+// ============================================================
+
+openOfflineDB()
+
+    .then(() => {
+
+        console.log(
+            "SHOPMANAGER Offline Database is ready!"
+        );
+
+        startAutomaticSync();
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "Database initialization failed:",
+            error
+        );
+
+    });
+
+
+console.log(
+    "SHOPMANAGER Offline Database module loaded!"
+);

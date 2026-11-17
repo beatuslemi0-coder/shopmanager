@@ -7,6 +7,7 @@ const APP_FILES = [
   "./css/style.css",
   "./js/api.js",
   "./js/app.js",
+  "./js/offline/database.js",
   "./js/data.js",
   "./js/main.js"
 ];
