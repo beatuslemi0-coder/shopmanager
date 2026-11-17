@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.dependencies import get_current_user, require_active_subscription
@@ -20,9 +21,36 @@ def all(db: Session = Depends(get_db), u=Depends(require_active_subscription)):
 
 @router.post("", response_model=ExpenseOut)
 def create(d: ExpenseIn, db: Session = Depends(get_db), u=Depends(require_active_subscription)):
+    if d.offline_id:
+        existing = (
+            db.query(Expense)
+            .filter(
+                Expense.owner_id == u.id,
+                Expense.offline_id == d.offline_id,
+            )
+            .first()
+        )
+        if existing:
+            return existing
+
     e = Expense(owner_id=u.id, **d.model_dump())
     db.add(e)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if d.offline_id:
+            existing = (
+                db.query(Expense)
+                .filter(
+                    Expense.owner_id == u.id,
+                    Expense.offline_id == d.offline_id,
+                )
+                .first()
+            )
+            if existing:
+                return existing
+        raise
     db.refresh(e)
     return e
 
@@ -34,7 +62,7 @@ def update(
     e = db.query(Expense).filter(Expense.id == id, Expense.owner_id == u.id).first()
     if not e:
         raise HTTPException(404, "Expense not found")
-    for k, v in d.model_dump().items():
+    for k, v in d.model_dump(exclude={"offline_id"}).items():
         setattr(e, k, v)
     db.commit()
     db.refresh(e)

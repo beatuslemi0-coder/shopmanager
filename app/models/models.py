@@ -76,6 +76,9 @@ class Product(Base):
 class Sale(Base):
     __tablename__ = "sales"
     id: Mapped[int] = mapped_column(primary_key=True)
+    offline_id: Mapped[str | None] = mapped_column(
+        String(36), nullable=True, unique=True, index=True
+    )
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     customer_id: Mapped[int | None] = mapped_column(
         ForeignKey("customers.id", ondelete="SET NULL")
@@ -107,6 +110,9 @@ class SaleItem(Base):
 class Expense(Base):
     __tablename__ = "expenses"
     id: Mapped[int] = mapped_column(primary_key=True)
+    offline_id: Mapped[str | None] = mapped_column(
+        String(36), nullable=True, unique=True, index=True
+    )
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     category: Mapped[str] = mapped_column(String(80))
     description: Mapped[str | None] = mapped_column(Text)

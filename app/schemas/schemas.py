@@ -93,6 +93,7 @@ class SaleItemIn(BaseModel):
 
 
 class SaleIn(BaseModel):
+    offline_id: str | None = None
     customer_id: int | None = None
     payment_method: str = "Cash"
     notes: str | None = None
@@ -101,6 +102,7 @@ class SaleIn(BaseModel):
 
 class SaleOut(ORM):
     id: int
+    offline_id: str | None
     payment_method: str
     total_amount: Decimal
     total_cost: Decimal
@@ -109,6 +111,7 @@ class SaleOut(ORM):
 
 
 class ExpenseIn(BaseModel):
+    offline_id: str | None = None
     category: str
     description: str | None = None
     amount: Decimal = Field(gt=0)
@@ -118,6 +121,7 @@ class ExpenseIn(BaseModel):
 
 class ExpenseOut(ORM):
     id: int
+    offline_id: str | None
     category: str
     description: str | None
     amount: Decimal
