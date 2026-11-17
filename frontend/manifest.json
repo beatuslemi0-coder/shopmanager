@@ -1,0 +1,10 @@
+{
+  "name": "SHOPMANAGER",
+  "short_name": "SHOPMANAGER",
+  "description": "Manage your business anywhere, anytime.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb"
+}
